@@ -1,154 +1,11 @@
 import re
+from tokens import *
+from token_class import Token
+from constants import *
+from error_class import *
+from position_class import *
 
-# (tokens)
-
-TT_ALT       = 'ALT'
-TT_ALTHEO    = 'ALTHEO'
-TT_ANCHOR    = 'ANCHOR'
-TT_ASSIGN    = 'ASSIGN'
-TT_BOARD     = 'BOARD'
-TT_BULL      = 'BULL'
-TT_CHEST     = 'CHEST'
-TT_COP       = 'COP'
-TT_COMMA     = 'COMMA'
-TT_CREW      = 'CREW'
-TT_DAGGER    = 'DAGGER'
-TT_DIV       = 'DIV'
-TT_DOFFY     = 'DOFFY'
-TT_EQUAL     = 'EQUAL'
-TT_EXCLA     = 'EXCLA'
-TT_EXPONENT  = 'EXPONENT'
-TT_FDIV      = 'FDIV'
-TT_FIRE      = 'FIRE'
-TT_FLEET     = 'FLEET'
-TT_FOUR      = 'FOUR'
-TT_GEQUAL    = 'GEQUAL'
-TT_GTHAN     = 'GTHAN'
-TT_HELM      = 'HELM'
-TT_HOME      = 'HOME'
-TT_IDTFR     = 'IDENTIFIER' 
-TT_LBRACKET  = 'LBRACKET'
-TT_LEAK      = 'LEAK'
-TT_LEQUAL    = 'LEQUAL'
-TT_LOAD      = 'LOAD'
-TT_LOP       = 'LOP'
-TT_LOYAL     = 'LOYAL'
-TT_LPAREN    = 'LPAREN'
-TT_LTHAN     = 'LTHAN'
-TT_MINUS     = 'MINUS'
-TT_MLCOMMENT = 'MLCOMMENT'
-TT_MOD       = 'MOD'
-TT_MUL       = 'MUL'
-TT_NOTEQUAL  = 'NOTEQUAL'
-TT_OFFBOARD  = 'OFFBOARD'
-TT_ONBOARD   = 'ONBOARD'
-TT_PASS      = 'PASS'
-TT_PINT      = 'PINT'
-TT_PLUS      = 'PLUS'
-TT_RBRACKET  = 'RBRACKET'
-TT_REAL      = 'REAL'
-TT_RPAREN    = 'RPAREN'
-TT_SAIL      = 'SAIL'
-TT_SLCOMMENT = 'SLCOMMENT'
-TT_SMCLN     = 'SMCLN'
-TT_STEND     = 'STEND'
-TT_THEO      = 'THEO'
-TT_UOP       = 'UOP'
-TT_USOPP     = 'USOPP'
-TT_VOID      = 'VOID'
-TT_WHALE     = 'WHALE'
-
-class Token:
-    def __init__(self, line_number, type_, value=None):
-        self.line_number = line_number
-        self.type = type_
-        self.value = value
-
-    def __repr__(self):
-        if self.value:
-            return f'Line {self.line_number}: {self.type}: {self.value}'
-        return f'Line {self.line_number}: {self.type}'
-
-# (constants)
-
-NUM       = '123456789'
-NUMERIC   = '0123456789'
-LETTER_S  = 'abcdefghijklmnopqrstuvwxyz'
-LETTER_B  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-LETTER_A  = f'{LETTER_S}{LETTER_B}'
-ALPHA_NUM = f'{LETTER_A}{NUMERIC}'
-MOS       = '+-*/%.'
-SPXCHAR1  = '!@#$%^&*'
-SPXCHAR2  = '()[]{\}<>'
-SPXCHAR3  = '.,:;-_=+'
-SPXCHAR4  = '`~|/?!"'
-SPXCHAR5  = '\' '
-SPXCHAR6  = '\'"`~^_-'
-SPXCHAR7  = '€£¥¢$¤₣₧₨₹'
-SPXCHAR8  = '←→↑↓↔↕↖↗↘↙'
-SPXCHAR9  = '•◦●○‣⁃∙◆▪▫'
-SPXSYMB1  = '©'
-SPXSYMB2  = '®'
-SPXSYMB3  = '™'
-SPECIAL   = f'{SPXCHAR1}{SPXCHAR2}{SPXCHAR3}{SPXCHAR4}{SPXCHAR5}{SPXCHAR6}{SPXCHAR7}{SPXCHAR8}{SPXCHAR9}{SPXSYMB1}{SPXSYMB2}{SPXSYMB3}'
-DELIMID   = f'{MOS}; =!><()[],}}'
-DELIM1    = ' {'
-DELIM2    = ' ('
-DELIM3    = '{\n'
-DELIM4    = ' \n'
-DELIM5    = f' {NUMERIC}'
-DELIM6    = f' {ALPHA_NUM}'
-DELIM7    = ' ;+-*/.{'
-DELIM8    = f'{ALPHA_NUM},{{+-*/.'
-DELIM9    = ' ({'
-DELIM10    = ' ;,({[+-*/<>=%'
-DELIM11    = ' ;,({[+'
-
-# (errors)
-
-class Error:
-    def __init__(self, pos, error_name, details):
-        self.pos = pos
-        self.error_name = error_name
-        self.details = details
-
-    def as_string(self):
-        result = f'{self.error_name}: {self.details}'
-        result += f' File <stdin>, line {self.pos}'
-        return result
-
-class IllegalCharError(Error):
-    def __init__(self, pos, details):
-        super().__init__(pos, 'Illegal Character', details)
-
-class LexicalError(Error):
-    def __init__(self, pos, details):
-        super().__init__(pos, 'Lexical Error', details)
-
-# (position)
-
-class Position:
-    def __init__(self, idx, ln, col, fn, ftxt):
-        self.idx = idx
-        self.ln = ln
-        self.col = col
-        self.fn = fn
-        self.ftxt = ftxt
-
-    def advance(self, current_char):
-        self.idx += 1
-        self.col += 1
-
-        if current_char == '\n':
-            self.ln += 1
-            self.col = 0
-
-        return self
-
-    def copy(self):
-        return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
-
-# (lexer)
+# LEXER CLASS
 
 class Lexer:
     def __init__(self, fn, text):
@@ -448,7 +305,7 @@ class Lexer:
                             num_str += self.current_char
                             self.advance()
                         if self.current_char in DELIM10:
-                            tokens.append(Token(self.pos.ln + 1, TT_PINT, num_str))
+                            tokens.append(Token(self.pos.ln + 1, TT_PINT_LIT, num_str))
                         elif self.current_char == ".":
                             num_str += self.current_char
                             dot_count+=1
@@ -461,7 +318,7 @@ class Lexer:
                                         num_str += self.current_char
                                         self.advance()
                                     elif self.current_char in DELIM10:
-                                        tokens.append(Token(self.pos.ln + 1, TT_FLEET, num_str))
+                                        tokens.append(Token(self.pos.ln + 1, TT_FLEET_LIT, num_str))
                                         break
                                     else:
                                         errors.append(LexicalError(self.pos.ln + 1, num_str))
@@ -473,7 +330,7 @@ class Lexer:
                         num_str += self.current_char
                         self.advance()
                         if self.current_char in DELIM10:
-                            tokens.append(Token(self.pos.ln + 1, TT_PINT, '0'))
+                            tokens.append(Token(self.pos.ln + 1, TT_PINT_LIT, '0'))
                         elif self.current_char == ".":
                             num_str += self.current_char
                             dot_count+=1
@@ -486,7 +343,7 @@ class Lexer:
                                         num_str += self.current_char
                                         self.advance()
                                     elif self.current_char in DELIM10:
-                                        tokens.append(Token(self.pos.ln + 1, TT_FLEET, float(num_str)))
+                                        tokens.append(Token(self.pos.ln + 1, TT_FLEET_LIT, float(num_str)))
                                     else:
                                         errors.append(LexicalError(self.pos.ln + 1, num_str))
                             else:
@@ -608,7 +465,7 @@ class Lexer:
                         escape = True
                     elif self.current_char == '"':
                         self.advance()
-                        tokens.append(Token(self.pos.ln + 1, TT_DOFFY, '"' + string + '"')) 
+                        tokens.append(Token(self.pos.ln + 1, TT_DOFFY_LIT, '"' + string + '"')) 
                         isValidString = True
                         break
                     else:
@@ -634,7 +491,7 @@ class Lexer:
                         escape = True
                     elif self.current_char == "`":
                         self.advance()
-                        tokens.append(Token(self.pos.ln + 1, TT_DOFFY, "`" + string + "`")) 
+                        tokens.append(Token(self.pos.ln + 1, TT_DOFFY_LIT, "`" + string + "`")) 
                         isValidString = True
                         break
                     else:
@@ -653,7 +510,7 @@ class Lexer:
                         num_str += self.current_char
                         self.advance()
                     if self.current_char in DELIM10 or self.current_char in ")]}":
-                        tokens.append(Token(self.pos.ln + 1, TT_PINT, int(num_str)))
+                        tokens.append(Token(self.pos.ln + 1, TT_PINT_LIT, int(num_str)))
                     elif self.current_char == ".":
                         num_str += self.current_char
                         dot_count+=1
@@ -667,7 +524,7 @@ class Lexer:
                                     num_str += self.current_char
                                     self.advance()
                                 elif self.current_char in DELIM10 and i == 5:
-                                    tokens.append(Token(self.pos.ln + 1, TT_FLEET, float(num_str)))
+                                    tokens.append(Token(self.pos.ln + 1, TT_FLEET_LIT, float(num_str)))
                                     isValidNum = True
                                     break
                             if not isValidNum:
@@ -680,7 +537,7 @@ class Lexer:
                     num_str += self.current_char
                     self.advance()
                     if self.current_char in DELIM10:
-                        tokens.append(Token(self.pos.ln + 1, TT_PINT, '0'))
+                        tokens.append(Token(self.pos.ln + 1, TT_PINT_LIT, '0'))
                     elif self.current_char == ".":
                         num_str += self.current_char
                         dot_count+=1
@@ -694,7 +551,7 @@ class Lexer:
                                     num_str += self.current_char
                                     self.advance()
                                 elif self.current_char in DELIM10 and i == 5:
-                                    tokens.append(Token(self.pos.ln + 1, TT_FLEET, float(num_str)))
+                                    tokens.append(Token(self.pos.ln + 1, TT_FLEET_LIT, float(num_str)))
                                     isValidNum = True
                                     break
                             if not isValidNum:
@@ -747,4 +604,7 @@ def run(fn, text):
 
 def analyze_text(input_text):
     result, error = run('<stdin>', input_text)
+    print("Hello")
+    print(result)
+    print("Hiii")
     return result, error
