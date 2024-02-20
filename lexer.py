@@ -81,6 +81,15 @@ class Lexer:
                                     if self.current_char == ' ':
                                         tokens.append(Token(self.pos.ln + 1, TT_CHEST, word))
                                         isIDNTFR = False
+                    if word[1] == 'a' and len(word) >= 3:
+                        if word[2] == 'p' and len(word) >= 4:
+                            if word[3] == 't' and len(word) >= 5:
+                                if word[4] == 'a' and len(word) >= 6:
+                                    if word[5] == 'i' and len(word) >= 7:
+                                        if word[6] == 'n':
+                                            if self.current_char != None and self.current_char == '(':
+                                                tokens.append(Token(self.pos.ln + 1, TT_CAPTAIN, word))
+                                                isIDNTFR = False
 
                 # LETTER D
                 if word[0] == 'd' and len(word) >= 2:

@@ -19,17 +19,20 @@ class SyntaxAnalyzer:
             self.current_token = None
 
     def consume(self, expected_types):
-        if self.current_token.type in expected_types:
-            self.advance()
-        else:
+        if self.current_token is not None:
+            if self.current_token.type in expected_types:
+                self.advance()
+            else:
+                expected_types_str = ', '.join(expected_types)
+                self.errors.append(f"Expected one of {expected_types_str}, found {self.current_token.type}")
+                # self.advance()
+        else: 
             expected_types_str = ', '.join(expected_types)
-            self.errors.append(f"Expected one of {expected_types_str}, found {self.current_token.type}")
-            print(f"Expected one of {expected_types_str}, found {self.current_token.type}")
+            self.errors.append(f"Expected one of {expected_types_str}, found none")
 
 
     def parse(self):
         self.program()
-        print(self.current_token)
         if self.current_token is not None:
             self.errors.append("Unexpected tokens found after end of program")
 
@@ -37,20 +40,26 @@ class SyntaxAnalyzer:
 
     def program(self):
         self.consume([TT_ONBOARD])
-        self.g_var_statement()
+        # self.g_var_statement()
+        self.consume([TT_CAPTAIN])
+        self.consume([TT_LPAREN])
+        self.consume([TT_RPAREN])
+        self.consume([TT_LBRACKET])
+        self.statement()
+        self.consume([TT_RBRACKET])
+        self.consume([TT_OFFBOARD])
 
-    def g_var_statement(self):
-        if self.current_token.type in [TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL]:
-            self.var_init()
-        if self.current_token.type in [TT_LOYAL]:
-            self.loyal_init()
-        # consume captain
+    def statement(self):
+        self.var_statement()
+        self.consume([TT_SMCLN])
+
+    def var_statement(self):
+        self.var_init()
 
     def var_init(self):
         self.var_dec()
         self.consume([TT_ASSIGN])
         self.value()
-        self.var_init_tail()
 
     def var_dec(self):
         self.d_type()
@@ -59,87 +68,11 @@ class SyntaxAnalyzer:
     def d_type(self):
         self.consume([TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL])
 
-    # needs looping
     def value(self):
-        if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT]:
-            self.num_value()
-        if self.current_token.type in [TT_USOPP, TT_REAL, TT_DOFFY_LIT, TT_IDTFR]:
-            self.consume([TT_USOPP, TT_REAL, TT_DOFFY_LIT, TT_IDTFR])
-        if self.current_token.type in [TT_LPAREN, TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT]:
-            self.math_operation()
-        self.func_call()
-        self.array()
-
-    def math_operation(self):
-        self.math_head()
-        self.mos()
-        self.math_tail()
-
-    def math_head(self):
-        self.math_head()
-        self.consume([TT_IDTFR])
-        self.func_call()
         self.num_value()
 
-    # def func_call(self):
-
     def num_value(self):
-        self.consume([TT_PINT_LIT, TT_FLEET_LIT])
-
-    # def var_init_tail(self):
-    #     self.next_2()
-
-    # def next_2(self):
-    #     self.consume([TT_COMMA])
-    #     self.var_assign()
-    #     self.next_2()
-
-    # def var_assign(self):
-    #     self.consume([TT_IDTFR])
-    #     self.consume([TT_ASSIGN])
-    #     self.value()
-
-    # def statement_list(self):
-    #     self.statement()
-    #     while self.current_token is not None:
-    #         self.statement()
-
-    # def statement(self):
-    #     if self.current_token.type == TokenType.IDENTIFIER:
-    #         self.expression_statement()
-    #     elif self.current_token.type == TokenType.IF:
-    #         self.if_statement()
-    #     elif self.current_token.type == TokenType.WHILE:
-    #         self.while_statement()
-    #     # Add more statement types as needed
-
-    # def expression_statement(self):
-    #     self.expression()
-    #     self.consume(TokenType.SEMICOLON)
-
-    # def expression(self):
-    #     self.term()
-    #     while self.current_token.type in [TokenType.ADD_OP]:
-    #         self.consume(self.current_token.type)
-    #         self.term()
-
-    # def term(self):
-    #     self.factor()
-    #     while self.current_token.type in [TokenType.MUL_OP]:
-    #         self.consume(self.current_token.type)
-    #         self.factor()
-
-    # def factor(self):
-    #     if self.current_token.type == TokenType.INTEGER:
-    #         self.consume(TokenType.INTEGER)
-    #     elif self.current_token.type == TokenType.IDENTIFIER:
-    #         self.consume(TokenType.IDENTIFIER)
-    #     elif self.current_token.type == TokenType.LPAREN:
-    #         self.consume(TokenType.LPAREN)
-    #         self.expression()
-    #         self.consume(TokenType.RPAREN)
-    #     else:
-    #         self.errors.append("Invalid expression")
+        self.consume([TT_PINT_LIT,TT_FLEET_LIT])
 
 def analyze_syntax(tokens):
     syntax_analyzer = SyntaxAnalyzer(tokens)
@@ -152,12 +85,17 @@ def analyze_syntax(tokens):
 
 tokens = [
     Token(1, 'ONBOARD', 'Onboard'),
-    Token(2, 'PINT', 'pint'),
-    Token(2, 'IDENTIFIER', 'num'),
-    Token(2, 'ASSIGN', '='),
-    Token(2, 'PINT LIT', '1'),
-    Token(2, 'SMCLN', ';'),
-    Token(3, 'OFFBOARD', 'Offboard'),
+    Token(2, 'CAPTAIN', 'captain'),
+    Token(2, 'LPAREN', '('),
+    Token(2, 'RPAREN', ')'),
+    Token(2, 'LBRACKET', '{'),
+    Token(3, 'PINT', 'pint'),
+    Token(3, 'IDENTIFIER', 'num'),
+    Token(3, 'ASSIGN', '='),
+    Token(3, 'PINT LIT', '1'),
+    Token(3, 'SMCLN', ';'),
+    Token(4, 'RBRACKET', '}'),
+    Token(5, 'OFFBOARD', 'Offboard'),
 ]
 
 analyze_syntax(tokens)
