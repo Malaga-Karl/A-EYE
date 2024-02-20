@@ -4,6 +4,7 @@ from token_class import Token
 from constants import *
 from error_class import *
 from position_class import *
+import syntax
 
 # LEXER CLASS
 
@@ -613,7 +614,5 @@ def run(fn, text):
 
 def analyze_text(input_text):
     result, error = run('<stdin>', input_text)
-    print("Hello")
-    print(result)
-    print("Hiii")
+    syntax.analyze_syntax(result)
     return result, error

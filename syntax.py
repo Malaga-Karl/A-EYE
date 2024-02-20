@@ -60,6 +60,8 @@ class SyntaxAnalyzer:
         self.var_dec()
         self.consume([TT_ASSIGN])
         self.value()
+        if self.current_token.type == TT_COMMA:
+            self.var_init_tail()
 
     def var_dec(self):
         self.d_type()
@@ -67,6 +69,20 @@ class SyntaxAnalyzer:
 
     def d_type(self):
         self.consume([TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL])
+
+    def var_init_tail(self):
+        self.next2()
+
+    def next2(self):
+        if self.current_token.type == TT_COMMA:
+            self.consume([TT_COMMA])
+            self.var_assign()
+            self.next2()
+
+    def var_assign(self):
+        self.consume([TT_IDTFR])
+        self.consume([TT_ASSIGN])
+        self.value()
 
     def value(self):
         self.num_value()
@@ -93,6 +109,14 @@ tokens = [
     Token(3, 'IDENTIFIER', 'num'),
     Token(3, 'ASSIGN', '='),
     Token(3, 'PINT LIT', '1'),
+    Token(3, 'COMMA', ','),
+    Token(3, 'IDENTIFIER', 'num2'),
+    Token(3, 'ASSIGN', '='),
+    Token(3, 'PINT LIT', '2'),
+    Token(3, 'COMMA', ','),
+    Token(3, 'IDENTIFIER', 'num3'),
+    Token(3, 'ASSIGN', '='),
+    Token(3, 'PINT LIT', '3'),
     Token(3, 'SMCLN', ';'),
     Token(4, 'RBRACKET', '}'),
     Token(5, 'OFFBOARD', 'Offboard'),
