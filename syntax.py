@@ -99,6 +99,7 @@ def analyze_syntax(tokens):
     else:
         print("Syntax analysis successful")
 
+# tite
 tokens = [
     Token(1, 'ONBOARD', 'Onboard'),
     Token(2, 'CAPTAIN', 'captain'),
