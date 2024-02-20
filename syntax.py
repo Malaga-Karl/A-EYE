@@ -1,3 +1,5 @@
+from os import system
+import os
 from tokens import *
 from token_class import Token
 from constants import *
@@ -40,7 +42,7 @@ class SyntaxAnalyzer:
 
     def program(self):
         self.consume([TT_ONBOARD])
-        # self.g_var_statement()
+        self.g_var_statement()
         self.consume([TT_CAPTAIN])
         self.consume([TT_LPAREN])
         self.consume([TT_RPAREN])
@@ -89,38 +91,52 @@ class SyntaxAnalyzer:
 
     def num_value(self):
         self.consume([TT_PINT_LIT,TT_FLEET_LIT])
+        
+    def loyal_init(self):
+        self.consume([TT_LOYAL])
+        self.var_init()
+        
+    def g_var_statement(self):
+        if self.current_token.type in [TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL]:
+            self.var_init()
+            self.consume([TT_SMCLN])
+        elif self.current_token.type in [TT_LOYAL]:
+            self.loyal_init()
+            self.consume([TT_SMCLN])
 
 def analyze_syntax(tokens):
     syntax_analyzer = SyntaxAnalyzer(tokens)
     errors = syntax_analyzer.parse()
+    os.system("cls")
+    print("*----------------------------------------------------------*")
     if errors:
         for error in errors:
             print(error)
     else:
         print("Syntax analysis successful")
+    print("*----------------------------------------------------------*")
 
-# tite
-tokens = [
-    Token(1, 'ONBOARD', 'Onboard'),
-    Token(2, 'CAPTAIN', 'captain'),
-    Token(2, 'LPAREN', '('),
-    Token(2, 'RPAREN', ')'),
-    Token(2, 'LBRACKET', '{'),
-    Token(3, 'PINT', 'pint'),
-    Token(3, 'IDENTIFIER', 'num'),
-    Token(3, 'ASSIGN', '='),
-    Token(3, 'PINT LIT', '1'),
-    Token(3, 'COMMA', ','),
-    Token(3, 'IDENTIFIER', 'num2'),
-    Token(3, 'ASSIGN', '='),
-    Token(3, 'PINT LIT', '2'),
-    Token(3, 'COMMA', ','),
-    Token(3, 'IDENTIFIER', 'num3'),
-    Token(3, 'ASSIGN', '='),
-    Token(3, 'PINT LIT', '3'),
-    Token(3, 'SMCLN', ';'),
-    Token(4, 'RBRACKET', '}'),
-    Token(5, 'OFFBOARD', 'Offboard'),
-]
+# tokens = [
+#     Token(1, 'ONBOARD', 'Onboard'),
+#     Token(2, 'CAPTAIN', 'captain'),
+#     Token(2, 'LPAREN', '('),
+#     Token(2, 'RPAREN', ')'),
+#     Token(2, 'LBRACKET', '{'),
+#     Token(3, 'PINT', 'pint'),
+#     Token(3, 'IDENTIFIER', 'num'),
+#     Token(3, 'ASSIGN', '='),
+#     Token(3, 'PINT LIT', '1'),
+#     Token(3, 'COMMA', ','),
+#     Token(3, 'IDENTIFIER', 'num2'),
+#     Token(3, 'ASSIGN', '='),
+#     Token(3, 'PINT LIT', '2'),
+#     Token(3, 'COMMA', ','),
+#     Token(3, 'IDENTIFIER', 'num3'),
+#     Token(3, 'ASSIGN', '='),
+#     Token(3, 'PINT LIT', '3'),
+#     Token(3, 'SMCLN', ';'),
+#     Token(4, 'RBRACKET', '}'),
+#     Token(5, 'OFFBOARD', 'Offboard'),
+# ]
 
-analyze_syntax(tokens)
+# analyze_syntax(tokens)
