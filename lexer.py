@@ -404,6 +404,12 @@ class Lexer:
             elif self.current_char == '}':
                 tokens.append(Token(self.pos.ln + 1, TT_RBRACKET, '}'))
                 self.advance()
+            elif self.current_char == '[':
+                tokens.append(Token(self.pos.ln + 1, TT_LSBRACKET, '['))
+                self.advance()
+            elif self.current_char == ']':
+                tokens.append(Token(self.pos.ln + 1, TT_RSBRACKET, ']'))
+                self.advance()
             elif self.current_char == ';':
                 tokens.append(Token(self.pos.ln + 1, TT_SMCLN, ';'))
                 self.advance()
@@ -614,5 +620,5 @@ def run(fn, text):
 
 def analyze_text(input_text):
     result, error = run('<stdin>', input_text)
-    syntax.analyze_syntax(result)
+    # syntax.analyze_syntax(result)
     return result, error

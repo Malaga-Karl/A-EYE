@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import lexer
+import syntax
 import imageio
 from PIL import Image, ImageTk
 from moviepy.editor import VideoFileClip 
@@ -20,6 +21,38 @@ def analyze_code():
     terminal_text.delete("1.0", "end")
     for error in errors:
         terminal_text.insert(tk.END, error.as_string() + "\n")
+
+    table_headers = ["Line #", "Lexeme", "Token"]
+    table.delete(*table.get_children()) 
+    
+    for token in result:
+        row = [str(token.line_number), token.value if token.value else "", token.type]
+        table.insert("", "end", values=row)
+
+    terminal_text.config(state="disabled")
+
+def analyze_syntax():
+    code = text_widget.get("1.0", "end").strip()
+    
+    placeholder_text = 'Start the code here ...................'
+    if code == placeholder_text:
+        return
+    result, errors = lexer.analyze_text(code)
+    if not errors:
+        syntax_result = syntax.analyze_syntax(result)
+
+    terminal_text.config(state="normal")
+    terminal_text.delete("1.0", "end")
+    if errors:
+        for error in errors:
+            terminal_text.insert(tk.END, error.as_string() + "\n")
+        terminal_text.config(state="disabled")
+    else:
+        terminal_text.insert(tk.END, syntax_result + "\n")
+        terminal_text.config(state="disabled")
+        if syntax_result == "Syntax analysis successful":
+            terminal_text.tag_configure("success", foreground="green")
+            terminal_text.tag_add("success", "1.0", "end")
 
     table_headers = ["Line #", "Lexeme", "Token"]
     table.delete(*table.get_children()) 
@@ -198,7 +231,7 @@ btn_lexical.bind("<Enter>", on_enter)
 btn_lexical.bind("<Leave>", on_leave)
 
 #Syntax Button
-btn_syntax = tk.Button( frame_btnsNavBar, text="⚓ Syntax", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", command="", width=button_width, padx=8)
+btn_syntax = tk.Button( frame_btnsNavBar, text="⚓ Syntax", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", command=analyze_syntax, width=button_width, padx=8)
 btn_syntax.pack(side="left", fill="both", expand=True)
 btn_syntax.bind("<Enter>", on_enter)
 btn_syntax.bind("<Leave>", on_leave)

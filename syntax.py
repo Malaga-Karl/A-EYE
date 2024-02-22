@@ -26,23 +26,26 @@ class SyntaxAnalyzer:
                 self.advance()
             else:
                 expected_types_str = ', '.join(expected_types)
-                self.errors.append(f"Expected one of {expected_types_str}, found {self.current_token.type}")
-                # self.advance()
+                if not self.errors:
+                    self.errors.append(f"Expected one of {expected_types_str}, found {self.current_token.type} in line {self.current_token.line_number}")
         else: 
             expected_types_str = ', '.join(expected_types)
-            self.errors.append(f"Expected one of {expected_types_str}, found none")
+            if not self.errors:
+                self.errors.append(f"Expected one of {expected_types_str}, found none")
 
 
     def parse(self):
         self.program()
         if self.current_token is not None:
-            self.errors.append("Unexpected tokens found after end of program")
+            if not self.errors:
+                self.errors.append("Unexpected tokens found after end of program")
 
         return self.errors
 
+    # 1
     def program(self):
         self.consume([TT_ONBOARD])
-        self.g_var_statement()
+        self.globall()
         self.consume([TT_CAPTAIN])
         self.consume([TT_LPAREN])
         self.consume([TT_RPAREN])
@@ -51,13 +54,18 @@ class SyntaxAnalyzer:
         self.consume([TT_RBRACKET])
         self.consume([TT_OFFBOARD])
 
-    def statement(self):
-        self.var_statement()
-        self.consume([TT_SMCLN])
+    # 2
+    # 3
+    def globall(self):
+        if self.current_token.type in [TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL]:
+            self.var_statement()
+            self.consume([TT_SMCLN])
+            if self.current_token.type != TT_CAPTAIN:
+                self.globall()
+        else:
+            self.consume([TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL])
 
-    def var_statement(self):
-        self.var_init()
-
+    # 4
     def var_init(self):
         self.var_dec()
         self.consume([TT_ASSIGN])
@@ -65,78 +73,281 @@ class SyntaxAnalyzer:
         if self.current_token.type == TT_COMMA:
             self.var_init_tail()
 
+    # 5
+    def loyal_init(self):
+        self.consume([TT_LOYAL])
+        self.var_init()
+        
+    # 6
     def var_dec(self):
         self.d_type()
         self.consume([TT_IDTFR])
 
-    def d_type(self):
-        self.consume([TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL])
+    # 8
+    # 9
+    def num_value(self):
+        self.consume([TT_PINT_LIT,TT_FLEET_LIT])
+        
+    # 7
+    # 10
+    # 11
+    # 12
+    # 13
+    # 14
+    # 15
+    def value(self):
+        if self.current_token.type in [TT_LPAREN, TT_USOPP, TT_REAL, TT_DOFFY_LIT, TT_LSBRACKET, TT_PINT_LIT, TT_FLEET_LIT, TT_IDTFR]: 
+            if self.current_token.type == TT_LPAREN:
+                self.math_operation()
+            else:
+                if self.current_token.type in [TT_USOPP, TT_REAL, TT_DOFFY_LIT]: 
+                    self.consume([TT_USOPP, TT_REAL, TT_DOFFY_LIT])
+                else:
+                    if self.current_token.type != TT_LSBRACKET:
+                        if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT]:
+                            self.consume([TT_PINT_LIT, TT_FLEET_LIT])
+                            if self.current_token.type in [TT_COMMA, TT_SMCLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]: 
+                                if self.current_token.type not in [TT_COMMA, TT_SMCLN, ]:
+                                    self.mos()
+                                    self.math_tail()
+                            else:
+                                self.consume([TT_COMMA, TT_SMCLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV])
+                        elif self.current_token.type == TT_IDTFR:
+                            self.consume([TT_IDTFR])
+                            if self.current_token.type not in [TT_COMMA, TT_SMCLN]:
+                                if self.current_token.type == TT_LPAREN:
+                                    self.consume([TT_LPAREN])
+                                    self.arguments()
+                                    self.consume([TT_RPAREN])
+                                self.mos()
+                                self.math_tail()
+                    else:
+                        self.array()
+        else:
+            self.consume([TT_LPAREN, TT_USOPP, TT_REAL, TT_DOFFY_LIT, TT_LSBRACKET, TT_PINT_LIT, TT_FLEET_LIT, TT_IDTFR])
 
+    # 16
+    def math_operation(self):
+        self.math_head()
+        self.mos()
+        self.math_tail()
+
+    # 17
+    # 18
+    # 19
+    # 20
+    def math_head(self):
+        if self.current_token.type == TT_LPAREN:
+            self.consume([TT_LPAREN])
+            self.math_operation()
+            self.consume([TT_RPAREN])
+        else:
+            self.consume([TT_PINT_LIT, TT_FLEET_LIT, TT_IDTFR])
+            if self.current_token.type == TT_LPAREN:
+                self.consume([TT_LPAREN])
+                self.arguments()
+                self.consume([TT_RPAREN])
+
+    # 21
+    # 22
+    def math_tail(self):
+        if self.current_token.type == TT_LPAREN:
+            self.math_operation()
+        else:
+            self.math_head()
+
+    # 23
+    def array(self):
+        self.consume([TT_LSBRACKET])
+        self.value()
+        if self.current_token.type == TT_COMMA:
+            self.next_value()
+        self.consume([TT_RSBRACKET])
+
+    # 24
+    # 25
+    def next_value(self):
+        self.consume([TT_COMMA])
+        self.value()
+        if self.current_token.type == TT_COMMA:
+            self.next_value()
+
+    # 26
+    # 27
     def var_init_tail(self):
         self.next2()
 
+    # 28
+    # 29
     def next2(self):
         if self.current_token.type == TT_COMMA:
             self.consume([TT_COMMA])
             self.var_assign()
             self.next2()
 
+    # 30
     def var_assign(self):
         self.consume([TT_IDTFR])
         self.consume([TT_ASSIGN])
         self.value()
 
-    def value(self):
-        self.num_value()
+    # 31
+    # 32
+    # 33
+    # 34
+    def d_type(self):
+        self.consume([TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL])
 
-    def num_value(self):
-        self.consume([TT_PINT_LIT,TT_FLEET_LIT])
-        
-    def loyal_init(self):
-        self.consume([TT_LOYAL])
-        self.var_init()
-        
-    def g_var_statement(self):
+    # 35
+    # 36
+    # 37
+    def var_statement(self):
         if self.current_token.type in [TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL]:
             self.var_init()
-            self.consume([TT_SMCLN])
-        elif self.current_token.type in [TT_LOYAL]:
+        if self.current_token.type == TT_LOYAL:
             self.loyal_init()
-            self.consume([TT_SMCLN])
+
+    # 62
+    def comparator(self):
+        self.cop()
+
+    # 63
+    # 64
+    # 65
+    # 66
+    # 67
+    def cop(self):
+        if self.current_token.type in [TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL]: 
+            self.consume([TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL])
+        else:
+            self.str_cop()
+
+    # 68
+    # 69
+    def str_cop(self):
+        self.consume([TT_EQUAL, TT_NOTEQUAL])
+
+    # 70
+    # 71
+    # 72
+    # 73
+    # 74
+    # 75
+    # 76
+    def mos(self):
+        self.consume([TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV])
+
+    # 91
+    # 92
+    def update(self):
+        self.consume([TT_IDTFR])
+        if self.current_token.type == TT_ASSIGN:
+            self.consume([TT_ASSIGN])
+            self.value()
+        else:
+            self.uop()
+
+    # 93
+    def unary(self):
+        self.consume([TT_IDTFR])
+        self.uop()
+
+    # 94
+    # 95
+    def uop(self):
+        self.consume([TT_UOP])
+
+    # 97
+    def output_statement(self):
+        self.consume([TT_FIRE])
+        self.consume([TT_LPAREN])
+        self.value()
+        self.consume([TT_RPAREN])
+
+    # 98
+    def input_statement(self):
+        self.consume([TT_LOAD])
+        self.consume([TT_LPAREN])
+        self.consume([TT_DOFFY_LIT])
+        self.consume([TT_RPAREN])
+
+    # 111*
+    # 114*
+    # 115*
+    def arguments(self):
+        print("wait")
+
+    # 119
+    # 123
+    # 124
+    # 125
+    # 126
+    # 127
+    def statement(self):
+        if self.current_token.type == TT_FIRE:
+            self.output_statement()
+        elif self.current_token.type == TT_LOAD:
+            self.input_statement()
+        elif self.current_token.type == TT_IDTFR:
+            self.consume([TT_IDTFR])
+            if self.current_token.type == TT_LPAREN:
+                self.consume([TT_LPAREN])
+                self.arguments()
+                self.consume([TT_RPAREN])
+            else:
+                self.uop()
+        else:        
+            self.var_statement()
+        self.consume([TT_SMCLN])
 
 def analyze_syntax(tokens):
     syntax_analyzer = SyntaxAnalyzer(tokens)
     errors = syntax_analyzer.parse()
     os.system("cls")
-    print("*----------------------------------------------------------*")
     if errors:
-        for error in errors:
-            print(error)
+        return errors[0]
     else:
-        print("Syntax analysis successful")
-    print("*----------------------------------------------------------*")
+        return "Syntax analysis successful"
+
+# def analyze_syntax(tokens):
+#     syntax_analyzer = SyntaxAnalyzer(tokens)
+#     errors = syntax_analyzer.parse()
+#     os.system("cls")
+#     print("*------------------------------------------------------------------*")
+#     if errors:
+#         for error in errors:
+#             print(error)
+#     else:
+#         print ("Syntax analysis successful")
+#     print("*------------------------------------------------------------------*")
 
 # tokens = [
 #     Token(1, 'ONBOARD', 'Onboard'),
-#     Token(2, 'CAPTAIN', 'captain'),
-#     Token(2, 'LPAREN', '('),
-#     Token(2, 'RPAREN', ')'),
-#     Token(2, 'LBRACKET', '{'),
-#     Token(3, 'PINT', 'pint'),
-#     Token(3, 'IDENTIFIER', 'num'),
+#     Token(2, 'PINT', 'pint'),
+#     Token(2, 'IDENTIFIER', 'g'),
+#     Token(2, 'ASSIGN', '='),
+#     Token(2, 'PINT LIT', '1'),
+#     Token(2, 'SMCLN', ';'),
+#     Token(3, 'DOFFY', 'doffy'),
+#     Token(3, 'IDENTIFIER', 'name'),
 #     Token(3, 'ASSIGN', '='),
-#     Token(3, 'PINT LIT', '1'),
-#     Token(3, 'COMMA', ','),
-#     Token(3, 'IDENTIFIER', 'num2'),
-#     Token(3, 'ASSIGN', '='),
-#     Token(3, 'PINT LIT', '2'),
-#     Token(3, 'COMMA', ','),
-#     Token(3, 'IDENTIFIER', 'num3'),
-#     Token(3, 'ASSIGN', '='),
-#     Token(3, 'PINT LIT', '3'),
+#     Token(3, 'DOFFY LIT', 'luwesss'),
 #     Token(3, 'SMCLN', ';'),
-#     Token(4, 'RBRACKET', '}'),
-#     Token(5, 'OFFBOARD', 'Offboard'),
+#     Token(4, 'CAPTAIN', 'captain'),
+#     Token(4, 'LPAREN', '('),
+#     Token(4, 'RPAREN', ')'),
+#     Token(4, 'LBRACKET', '{'),
+#     Token(5, 'PINT', 'pint'),
+#     Token(5, 'IDENTIFIER', 'l'),
+#     Token(5, 'ASSIGN', '='),
+#     Token(5, 'PINT LIT', '1'),
+#     Token(5, 'COMMA', ','),
+#     Token(5, 'IDENTIFIER', 'll'),
+#     Token(5, 'ASSIGN', '='),
+#     Token(5, 'PINT LIT', '2'),
+#     Token(5, 'SMCLN', ';'),
+#     Token(6, 'RBRACKET', '}'),
+#     Token(7, 'OFFBOARD', 'Offboard'),
 # ]
 
 # analyze_syntax(tokens)
