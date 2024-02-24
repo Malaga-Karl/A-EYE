@@ -57,13 +57,14 @@ class SyntaxAnalyzer:
     # 2
     # 3
     def globall(self):
-        if self.current_token.type in [TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL]:
-            self.var_statement()
-            self.consume([TT_SMCLN])
+        if self.current_token.type in [TT_CAPTAIN, TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL]:
+            if self.current_token.type != TT_CAPTAIN:
+                self.var_statement()
+                self.consume([TT_SMCLN])
             if self.current_token.type != TT_CAPTAIN:
                 self.globall()
         else:
-            self.consume([TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL])
+            self.consume([TT_CAPTAIN, TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL])
 
     # 4
     def var_init(self):
