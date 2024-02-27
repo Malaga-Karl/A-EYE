@@ -51,7 +51,9 @@ class SyntaxAnalyzer:
         self.consume([TT_RPAREN])
         self.consume([TT_LBRACKET])
         self.statement()
+        self.home()
         self.consume([TT_RBRACKET])
+        self.sub_function()
         self.consume([TT_OFFBOARD])
 
     # 2

@@ -32,7 +32,7 @@ class Lexer:
             elif self.current_char in LETTER_A:
                 isIDNTFR = True
                 word = ''
-                while self.current_char is not None and self.current_char in LETTER_A or self.current_char == '_':
+                while self.current_char is not None and self.current_char in ALPHA_NUM or self.current_char == '_':
                     word += self.current_char
                     self.advance()
 
@@ -44,12 +44,18 @@ class Lexer:
                                 if self.current_char != None and self.current_char in DELIM1:
                                     tokens.append(Token(self.pos.ln + 1, TT_ALT, word))
                                     isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
+                                    isIDNTFR = False
                             else:
                                 if word[3] == 'h' and len(word) >= 5:
                                     if word[4] == 'e' and len(word) >= 6:
                                         if word[5] == 'o':
                                             if self.current_char != None and self.current_char in DELIM2:
                                                 tokens.append(Token(self.pos.ln + 1, TT_ALTHEO,word))
+                                                isIDNTFR = False
+                                            else:
+                                                errors.append(LexicalError(self.pos.ln + 1, word))
                                                 isIDNTFR = False
                     elif word[1] == 'n' and len(word) >= 3:
                         if word[2] == 'c' and len(word) >= 4:
@@ -59,9 +65,15 @@ class Lexer:
                                         if self.current_char != None and self.current_char in DELIM2:
                                             tokens.append(Token(self.pos.ln + 1, TT_ANCHOR,word))
                                             isIDNTFR = False
+                                        else:
+                                            errors.append(LexicalError(self.pos.ln + 1, word))
+                                            isIDNTFR = False
                         elif word[2] == 'd':
                             if self.current_char == ' ':
                                 tokens.append(Token(self.pos.ln + 1, TT_LOP, word))
+                                isIDNTFR = False
+                            else:
+                                errors.append(LexicalError(self.pos.ln + 1, word))
                                 isIDNTFR = False
 
                 # LETTER B
@@ -71,6 +83,9 @@ class Lexer:
                             if word[3] == 'l':
                                 if self.current_char == ' ':
                                     tokens.append(Token(self.pos.ln + 1, TT_BULL, word))
+                                    isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
                                     isIDNTFR = False
 
                 # LETTER C
@@ -82,14 +97,20 @@ class Lexer:
                                     if self.current_char == ' ':
                                         tokens.append(Token(self.pos.ln + 1, TT_CHEST, word))
                                         isIDNTFR = False
+                                    else:
+                                        errors.append(LexicalError(self.pos.ln + 1, word))
+                                        isIDNTFR = False
                     if word[1] == 'a' and len(word) >= 3:
                         if word[2] == 'p' and len(word) >= 4:
                             if word[3] == 't' and len(word) >= 5:
                                 if word[4] == 'a' and len(word) >= 6:
                                     if word[5] == 'i' and len(word) >= 7:
                                         if word[6] == 'n':
-                                            if self.current_char != None and self.current_char == '(':
+                                            if self.current_char != None and self.current_char in DELIM1:
                                                 tokens.append(Token(self.pos.ln + 1, TT_CAPTAIN, word))
+                                                isIDNTFR = False
+                                            else:
+                                                errors.append(LexicalError(self.pos.ln + 1, word))
                                                 isIDNTFR = False
 
                 # LETTER D
@@ -102,13 +123,19 @@ class Lexer:
                                         if self.current_char != None and self.current_char in DELIM9:
                                             tokens.append(Token(self.pos.ln + 1, TT_DAGGER, word))
                                             isIDNTFR = False
+                                        else:
+                                            errors.append(LexicalError(self.pos.ln + 1, word))
+                                            isIDNTFR = False
                     elif word[1] == 'o' and len(word) >= 3:
                         if word[2] == 'f' and len(word) >= 4:
                             if word[3] == 'f' and len(word) >= 5:
                                 if word[4] == 'y':
                                     if self.current_char == ' ':
                                         tokens.append(Token(self.pos.ln + 1, TT_DOFFY, word))
-                                        isIDNTFR = False                    
+                                        isIDNTFR = False   
+                                    else:
+                                        errors.append(LexicalError(self.pos.ln + 1, word))
+                                        isIDNTFR = False                 
 
                 # LETTER F
                 if word[0] == 'f' and len(word) >= 2:
@@ -118,6 +145,9 @@ class Lexer:
                                 if self.current_char != None and self.current_char in DELIM2:
                                     tokens.append(Token(self.pos.ln + 1, TT_FIRE, word))
                                     isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
+                                    isIDNTFR = False
                     elif word[1] == 'l' and len(word) >= 3:
                         if word[2] == 'e' and len(word) >= 4:
                             if word[3] == 'e' and len(word) >= 5:
@@ -125,11 +155,17 @@ class Lexer:
                                     if self.current_char == ' ':
                                         tokens.append(Token(self.pos.ln + 1, TT_FLEET, word))
                                         isIDNTFR = False
+                                    else:
+                                        errors.append(LexicalError(self.pos.ln + 1, word))
+                                        isIDNTFR = False
                     elif word[1] == 'o' and len(word) >= 3:
                         if word[2] == 'u' and len(word) >= 4:
                             if word[3] == 'r':
                                 if self.current_char != None and self.current_char in DELIM2:
                                     tokens.append(Token(self.pos.ln + 1, TT_FOUR, word))
+                                    isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
                                     isIDNTFR = False
 
                 # LETTER H
@@ -140,11 +176,17 @@ class Lexer:
                                 if self.current_char != None and self.current_char in DELIM2:
                                     tokens.append(Token(self.pos.ln + 1, TT_HELM, word))
                                     isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
+                                    isIDNTFR = False
                     elif word[1] == 'o' and len(word) >= 3:
                         if word[2] == 'm' and len(word) >= 4:
                             if word[3] == 'e': 
                                 if self.current_char != None and self.current_char in DELIM2:
                                     tokens.append(Token(self.pos.ln + 1, TT_HOME, word))
+                                    isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
                                     isIDNTFR = False
 
                 # LETTER L
@@ -155,17 +197,33 @@ class Lexer:
                                 if self.current_char == ';':
                                     tokens.append(Token(self.pos.ln + 1, TT_LEAK, word))
                                     isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
+                                    isIDNTFR = False
+                        elif word[2] == 'n':
+                            if self.current_char == '(':
+                                tokens.append(Token(self.pos.ln + 1, TT_LEN, word))
+                                isIDNTFR = False
+                            else:
+                                errors.append(LexicalError(self.pos.ln + 1, word))
+                                isIDNTFR = False
                     elif word[1] == 'o' and len(word) >= 3:
                         if word[2] == 'a' and len(word) >= 4:
                             if word[3] == 'd':
                                 if self.current_char == '(':
                                     tokens.append(Token(self.pos.ln + 1, TT_LOAD, word))
                                     isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
+                                    isIDNTFR = False
                         elif word[2] == 'y' and len(word) >= 4:
                             if word[3] == 'a' and len(word) >= 5: 
                                 if word[4] == 'l': 
                                     if self.current_char == ' ':
                                         tokens.append(Token(self.pos.ln + 1, TT_LOYAL, word))
+                                        isIDNTFR = False
+                                    else:
+                                        errors.append(LexicalError(self.pos.ln + 1, word))
                                         isIDNTFR = False
 
                 # LETTER N
@@ -175,18 +233,12 @@ class Lexer:
                             if self.current_char == ' ':
                                 tokens.append(Token(self.pos.ln + 1, TT_LOP, word))
                                 isIDNTFR = False
-                
-                # LETTER O
-                # SMALL O
-                if word[0] == 'o' and len(word) >= 2:
-                    if word[1] == 'r' and len(word) >= 3:
-                        if word[2] == 'o':
-                            if self.current_char == ' ':
-                                tokens.append(Token(self.pos.ln + 1, TT_LOP, word))
+                            else:
+                                errors.append(LexicalError(self.pos.ln + 1, word))
                                 isIDNTFR = False
                 
-                # BIG O
-                if word[0] == 'O' and len(word) >= 2:
+                # LETTER O
+                if word[0] == 'o' and len(word) >= 2:
                     if word[1] == 'f' and len(word) >= 3:
                         if word[2] == 'f' and len(word) >= 4:
                             if word[3] == 'b' and len(word) >= 5:
@@ -205,6 +257,17 @@ class Lexer:
                                             if self.current_char != None and self.current_char in DELIM4:
                                                 tokens.append(Token(self.pos.ln + 1, TT_ONBOARD, word))
                                                 isIDNTFR = False
+                                            else:
+                                                errors.append(LexicalError(self.pos.ln + 1, word))
+                                                isIDNTFR = False
+                    elif word[1] == 'r' and len(word) >= 3:
+                        if word[2] == 'o':
+                            if self.current_char == ' ':
+                                tokens.append(Token(self.pos.ln + 1, TT_LOP, word))
+                                isIDNTFR = False
+                            else:
+                                errors.append(LexicalError(self.pos.ln + 1, word))
+                                isIDNTFR = False
                 
                 # LETTER P
                 if word[0] == 'p' and len(word) >= 2:
@@ -214,11 +277,17 @@ class Lexer:
                                 if self.current_char == ' ':
                                     tokens.append(Token(self.pos.ln + 1, TT_PASS, word))
                                     isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
+                                    isIDNTFR = False
                     elif word[1] == 'i' and len(word) >= 3:
                         if word[2] == 'n' and len(word) >= 4:
                             if word[3] == 't':
                                 if self.current_char == ' ':
                                     tokens.append(Token(self.pos.ln + 1, TT_PINT, word))
+                                    isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
                                     isIDNTFR = False
 
                 # LETTER R
@@ -229,6 +298,9 @@ class Lexer:
                                 if self.current_char == ';':
                                     tokens.append(Token(self.pos.ln + 1, TT_REAL, word))
                                     isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
+                                    isIDNTFR = False
                 
                 # LETTER S
                 if word[0] == 's' and len(word) >= 2:
@@ -238,6 +310,9 @@ class Lexer:
                                 if self.current_char == ';':
                                     tokens.append(Token(self.pos.ln + 1, TT_SAIL, word))
                                     isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
+                                    isIDNTFR = False
                 
                 # LETTER T
                 if word[0] == 't' and len(word) >= 2:
@@ -246,6 +321,9 @@ class Lexer:
                             if word[3] == 'o':
                                 if self.current_char != None and self.current_char in DELIM2:
                                     tokens.append(Token(self.pos.ln + 1, TT_THEO, word))
+                                    isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
                                     isIDNTFR = False
 
                 # LETTER U
@@ -257,6 +335,9 @@ class Lexer:
                                     if self.current_char == ';':
                                         tokens.append(Token(self.pos.ln + 1, TT_USOPP, word))
                                         isIDNTFR = False
+                                    else:
+                                        errors.append(LexicalError(self.pos.ln + 1, word))
+                                        isIDNTFR = False
 
                 # LETTER V
                 if word[0] == 'v' and len(word) >= 2:
@@ -265,6 +346,9 @@ class Lexer:
                             if word[3] == 'd':
                                 if self.current_char == ' ':
                                     tokens.append(Token(self.pos.ln + 1, TT_VOID, word))
+                                    isIDNTFR = False
+                                else:
+                                    errors.append(LexicalError(self.pos.ln + 1, word))
                                     isIDNTFR = False
 
                 # LETTER W
@@ -275,6 +359,9 @@ class Lexer:
                                 if word[4] == 'e':
                                     if self.current_char != None and self.current_char in DELIM2:
                                         tokens.append(Token(self.pos.ln + 1, TT_WHALE, word))
+                                        isIDNTFR = False
+                                    else:
+                                        errors.append(LexicalError(self.pos.ln + 1, word))
                                         isIDNTFR = False
                 
                 # IDENTIFIER
@@ -606,7 +693,7 @@ class Lexer:
                 pos_start = self.pos.copy()
                 char = self.current_char
                 self.advance()
-                errors.append(IllegalCharError(self.pos.ln + 1, "'" + char + "'"))
+                errors.append(LexicalError(self.pos.ln + 1, char))
 
         return tokens, errors
 
@@ -620,5 +707,4 @@ def run(fn, text):
 
 def analyze_text(input_text):
     result, error = run('<stdin>', input_text)
-    # syntax.analyze_syntax(result)
     return result, error
