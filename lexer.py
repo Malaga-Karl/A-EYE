@@ -70,7 +70,7 @@ class Lexer:
                                             isIDNTFR = False
                         elif word[2] == 'd':
                             if self.current_char == ' ':
-                                tokens.append(Token(self.pos.ln + 1, TT_LOP, word))
+                                tokens.append(Token(self.pos.ln + 1, TT_AND, word))
                                 isIDNTFR = False
                             else:
                                 errors.append(LexicalError(self.pos.ln + 1, word))
@@ -106,7 +106,7 @@ class Lexer:
                                 if word[4] == 'a' and len(word) >= 6:
                                     if word[5] == 'i' and len(word) >= 7:
                                         if word[6] == 'n':
-                                            if self.current_char != None and self.current_char in DELIM1:
+                                            if self.current_char != None and self.current_char in DELIM2:
                                                 tokens.append(Token(self.pos.ln + 1, TT_CAPTAIN, word))
                                                 isIDNTFR = False
                                             else:
@@ -120,7 +120,7 @@ class Lexer:
                             if word[3] == 'g' and len(word) >= 5:
                                 if word[4] == 'e' and len(word) >= 6:
                                     if word[5] == 'r':
-                                        if self.current_char != None and self.current_char in DELIM9:
+                                        if self.current_char != None and self.current_char in DELIM14:
                                             tokens.append(Token(self.pos.ln + 1, TT_DAGGER, word))
                                             isIDNTFR = False
                                         else:
@@ -231,7 +231,7 @@ class Lexer:
                     if word[1] == 'a' and len(word) >= 3:
                         if word[2] == 'y':
                             if self.current_char == ' ':
-                                tokens.append(Token(self.pos.ln + 1, TT_LOP, word))
+                                tokens.append(Token(self.pos.ln + 1, TT_NAY, word))
                                 isIDNTFR = False
                             else:
                                 errors.append(LexicalError(self.pos.ln + 1, word))
@@ -263,7 +263,7 @@ class Lexer:
                     elif word[1] == 'r' and len(word) >= 3:
                         if word[2] == 'o':
                             if self.current_char == ' ':
-                                tokens.append(Token(self.pos.ln + 1, TT_LOP, word))
+                                tokens.append(Token(self.pos.ln + 1, TT_ORO, word))
                                 isIDNTFR = False
                             else:
                                 errors.append(LexicalError(self.pos.ln + 1, word))
@@ -374,7 +374,7 @@ class Lexer:
                 self.advance()
                 if self.current_char == '+':
                     self.advance()
-                    if self.current_char == ';':
+                    if self.current_char != None and self.current_char in DELIM13:
                         tokens.append(Token(self.pos.ln + 1, TT_UOP, '++'))
                     else:
                         errors.append(LexicalError(self.pos.ln + 1, "++"))
@@ -386,7 +386,7 @@ class Lexer:
                 self.advance()
                 if self.current_char == '-':
                     self.advance()
-                    if self.current_char == ';':
+                    if self.current_char != None and self.current_char in DELIM13:
                         tokens.append(Token(self.pos.ln + 1, TT_UOP, '--'))
                     else:
                         errors.append(LexicalError(self.pos.ln + 1, "--"))
@@ -500,6 +500,9 @@ class Lexer:
             elif self.current_char == ';':
                 tokens.append(Token(self.pos.ln + 1, TT_SMCLN, ';'))
                 self.advance()
+            elif self.current_char == ':':
+                tokens.append(Token(self.pos.ln + 1, TT_CLN, ':'))
+                self.advance()
             elif self.current_char == ',':
                 tokens.append(Token(self.pos.ln + 1, TT_COMMA, ','))
                 self.advance()
@@ -612,7 +615,7 @@ class Lexer:
                     while self.current_char in NUMERIC and len(num_str) != 14:
                         num_str += self.current_char
                         self.advance()
-                    if self.current_char in DELIM10 or self.current_char in ")]}":
+                    if self.current_char in DELIM10:
                         tokens.append(Token(self.pos.ln + 1, TT_PINT_LIT, int(num_str)))
                     elif self.current_char == ".":
                         num_str += self.current_char
