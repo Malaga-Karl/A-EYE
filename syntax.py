@@ -127,22 +127,25 @@ class SyntaxAnalyzer:
                     if self.current_token.type != TT_LSBRACKET:
                         if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT]:
                             self.num_value()
-                            if self.current_token.type in [TT_RPAREN, TT_COMMA, TT_SMCLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_CLN]: 
-                                if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN, TT_CLN]:
+                            if self.current_token.type in [TT_RPAREN, TT_COMMA, TT_SMCLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_CLN, TT_RSBRACKET]: 
+                                if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN, TT_CLN, TT_RSBRACKET]:
                                     self.mos()
                                     self.math_tail()
                             else:
-                                if not self.consume([TT_COMMA, TT_SMCLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_CLN]):return
+                                if not self.consume([TT_COMMA, TT_SMCLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_CLN, TT_RSBRACKET]):return
                         elif self.current_token.type == TT_IDTFR:
                             if not self.consume([TT_IDTFR]):return
-                            if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN, TT_CLN]:
-                                if self.current_token.type == TT_LPAREN:
-                                    if not self.consume([TT_LPAREN]):return
-                                    self.arguments()
-                                    if not self.consume([TT_RPAREN]):return
-                                if self.current_token.type not in [TT_COMMA, TT_SMCLN]:
-                                    self.mos()
-                                    self.math_tail()
+                            if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN, TT_CLN, TT_RSBRACKET]:
+                                if self.current_token.type != TT_LSBRACKET:
+                                    if self.current_token.type == TT_LPAREN:
+                                        if not self.consume([TT_LPAREN]):return
+                                        self.arguments()
+                                        if not self.consume([TT_RPAREN]):return
+                                    if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN]:
+                                        self.mos()
+                                        self.math_tail()
+                                else:
+                                    self.array()
                         elif self.current_token.type == TT_LEN:
                             if not self.consume([TT_LPAREN]):return
                             self.len_args()
@@ -275,7 +278,7 @@ class SyntaxAnalyzer:
             else:
                 self.relational_comp()
             if self.current_token.type in [TT_AND, TT_ORO]:
-                self.logical_keywords
+                self.logical_keywords()
                 self.condition()
         else:
             if not self.consume([TT_DOFFY_LIT, TT_LPAREN, TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_LEN, TT_NAY]):return
@@ -368,14 +371,14 @@ class SyntaxAnalyzer:
                         if not self.consume([TT_LPAREN]):return
                         self.arguments()
                         if not self.consume([TT_RPAREN]):return
-                    if self.current_token.type not in [TT_RPAREN, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL]:
+                    if self.current_token.type not in [TT_RPAREN, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_SMCLN]:
                         self.mos()
                         self.math_tail()
             elif self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT]: 
-                # PROBLEM
                 self.num_value()
-                if self.current_token.type in [TT_RPAREN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_SMCLN]: 
-                    if self.current_token.type not in [TT_RPAREN, TT_SMCLN]:
+                # PROBLEM
+                if self.current_token.type in [TT_RPAREN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_SMCLN, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_AND, TT_ORO]: 
+                    if self.current_token.type not in [TT_RPAREN, TT_SMCLN, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_AND, TT_ORO]:
                         self.mos()
                         self.math_tail()
                 else:
@@ -529,7 +532,7 @@ class SyntaxAnalyzer:
     def input_statement(self):
         if not self.consume([TT_LOAD]):return
         if not self.consume([TT_LPAREN]):return
-        if not self.consume([TT_DOFFY_LIT]):return
+        if not self.consume([TT_DOFFY_LIT, TT_IDTFR]):return
         if not self.consume([TT_RPAREN]):return
 
     # 101

@@ -19,8 +19,16 @@ def analyze_code():
 
     terminal_text.config(state="normal")
     terminal_text.delete("1.0", "end")
-    for error in errors:
-        terminal_text.insert(tk.END, error.as_string() + "\n")
+    if errors:
+        for error in errors:
+            terminal_text.insert(tk.END, error.as_string() + "\n")
+    else:
+        terminal_text.insert(tk.END, "Lexical analysis successful" + "\n")
+        terminal_text.config(state="disabled")
+        terminal_text.tag_configure("success", foreground="green")
+        terminal_text.tag_add("success", "1.0", "end")
+
+    
 
     table_headers = ["Line #", "Lexeme", "Token"]
     table.delete(*table.get_children()) 
