@@ -8,7 +8,7 @@ from position_class import *
 
 class SyntaxAnalyzer:
     def __init__(self, tokens):
-        self.tokens = tokens
+        self.tokens = [token for token in tokens if token.type not in [TT_SLCOMMENT, TT_MLCOMMENT]]
         self.current_token_idx = 0
         self.current_token = self.tokens[self.current_token_idx] if self.tokens else None
         self.errors = []
@@ -330,6 +330,8 @@ class SyntaxAnalyzer:
         self.statement()
         if self.current_token.type == TT_CHEST: 
             self.switch_cond_tail()
+        if self.current_token.type not in [TT_CHEST, TT_DAGGER]:
+            if not self.consume([TT_CHEST, TT_DAGGER]):return
 
     # 46
     # 47
@@ -659,7 +661,10 @@ class SyntaxAnalyzer:
     # 119
     def home(self):
         if not self.consume([TT_HOME]):return
+        if not self.consume([TT_LPAREN]):return
         self.value()
+        if not self.consume([TT_RPAREN]):return
+        if not self.consume([TT_SMCLN]):return
 
     # 120
     # 121
