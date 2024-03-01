@@ -376,7 +376,7 @@ class Lexer:
                 if self.current_char == '+':
                     self.advance()
                     if self.current_char != None and self.current_char in DELIM13:
-                        tokens.append(Token(self.pos.ln + 1, TT_UOP, '++'))
+                        tokens.append(Token(self.pos.ln + 1, TT_INCR, '++'))
                     else:
                         errors.append(LexicalError(self.pos.ln + 1, "++"))
                 elif self.current_char != None and self.current_char in DELIM6:
@@ -388,7 +388,7 @@ class Lexer:
                 if self.current_char == '-':
                     self.advance()
                     if self.current_char != None and self.current_char in DELIM13:
-                        tokens.append(Token(self.pos.ln + 1, TT_UOP, '--'))
+                        tokens.append(Token(self.pos.ln + 1, TT_DECR, '--'))
                     else:
                         errors.append(LexicalError(self.pos.ln + 1, "--"))
                 elif self.current_char != None and self.current_char in DELIM15:
