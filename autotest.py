@@ -30,7 +30,7 @@ with open('file.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     for index, row in df.iterrows():
         string = row['test_item']
-        expected = row['expected'].strip()
+        expected = row['expected']
         delims = ['\n', '\r', '\t']
         for delimiter in delims:
             string = " ".join(string.split(delimiter))
@@ -41,4 +41,4 @@ with open('file.csv', 'w', newline='') as file:
             detail = 'No Syntax Error'
         
         remarks = 'Pass' if detail == expected else 'Fail'
-        writer.writerow([string, expected, detail, remarks, result ])
+        writer.writerow([string, str(expected).strip(), detail, remarks, result ])
