@@ -147,31 +147,31 @@ def on_delete(event):
 
     text_widget.bind("<Delete>", on_delete)
     
-# #GIF Runtime
-def load_gif_frames(gif_path):
-    gif = Image.open(gif_path)
-    frames = [ImageTk.PhotoImage(frame) for frame in ImageSequence.Iterator(gif)]
-    return frames
+# # #GIF Runtime
+# def load_gif_frames(gif_path):
+#     gif = Image.open(gif_path)
+#     frames = [ImageTk.PhotoImage(frame) for frame in ImageSequence.Iterator(gif)]
+#     return frames
 
-# #MoviePy Video
-def play_intro():
-    video_path = "A-Eye Intro.mp4"  
-    clip = VideoFileClip(video_path)
-    intro_window = tk.Toplevel(root)
-    intro_window.attributes("-fullscreen", True)
-    clip = clip.resize(width=intro_window.winfo_screenwidth(), height=intro_window.winfo_screenheight())
-    video_label = tk.Label(intro_window)
-    video_label.pack(expand="true", fill="both")
-    clip.preview(fps=24)
+# # #MoviePy Video
+# def play_intro():
+#     video_path = "A-Eye Intro.mp4"  
+#     clip = VideoFileClip(video_path)
+#     intro_window = tk.Toplevel(root)
+#     intro_window.attributes("-fullscreen", True)
+#     clip = clip.resize(width=intro_window.winfo_screenwidth(), height=intro_window.winfo_screenheight())
+#     video_label = tk.Label(intro_window)
+#     video_label.pack(expand="true", fill="both")
+#     clip.preview(fps=24)
 
-    intro_window.destroy()
-    clip.close() 
+#     intro_window.destroy()
+#     clip.close() 
 
-def update_frame(frame_index=0):
-    frame = frames[frame_index]
-    background_label.configure(image=frame)
-    background_label.image = frame  
-    root.after(10, update_frame, (frame_index + 1) % len(frames))  
+# def update_frame(frame_index=0):
+#     frame = frames[frame_index]
+#     background_label.configure(image=frame)
+#     background_label.image = frame  
+#     root.after(10, update_frame, (frame_index + 1) % len(frames))  
 
 #Main Window
 root = tk.Tk()
@@ -180,33 +180,33 @@ screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 root.attributes("-fullscreen", True)  # Set full screen
 root.configure(bg="#373737")
-icon_image = tk.PhotoImage(file="A-EYE\A-Eye Logo.png")
+icon_image = tk.PhotoImage(file="A-Eye Logo.png")
 root.iconphoto(True, icon_image)
 
-gif_path = "background.gif"
+# gif_path = "background.gif"
 
-def load_gif_frames(gif_path):
-    reader = imageio.get_reader(gif_path, format='gif')
-    frames = [ImageTk.PhotoImage(Image.fromarray(frame)) for frame in reader]
-    return frames
+# def load_gif_frames(gif_path):
+#     reader = imageio.get_reader(gif_path, format='gif')
+#     frames = [ImageTk.PhotoImage(Image.fromarray(frame)) for frame in reader]
+#     return frames
 
-frames = load_gif_frames(gif_path)
+# frames = load_gif_frames(gif_path)
 
-play_intro() 
+# play_intro() 
 
 frame_content = tk.Frame(root, bg="#7C1520")
 frame_content.place(x=0, y=0, width=screen_width, height=screen_height)
 
-def update_frame(frame_index=0):
-    frame = frames[frame_index]
-    background_label.configure(image=frame)
-    background_label.image = frame  
-    root.after(100, update_frame, (frame_index + 1) % len(frames))  
+# def update_frame(frame_index=0):
+#     frame = frames[frame_index]
+#     background_label.configure(image=frame)
+#     background_label.image = frame  
+#     root.after(100, update_frame, (frame_index + 1) % len(frames))  
 
 background_label = tk.Label(frame_content, bg="#7C1520")
 background_label.place(x=0, y=0, relwidth=1, relheight=1)
 
-update_frame()
+# update_frame()
 
 style = ttk.Style()
 style.theme_use("default")
@@ -215,7 +215,7 @@ frame_navbar = tk.Frame(root, bg="#0F0F0F")
 frame_navbar.place(x=0, y=0, width=screen_width, height=50)
 
 #A-Eye Logo
-logo_image = tk.PhotoImage(file="A-EYE\A-Eye Logo.png") 
+logo_image = tk.PhotoImage(file="A-Eye Logo.png") 
 logo_image = logo_image.subsample(7, 7)  
 logo_label = tk.Label(frame_navbar, image=logo_image, bg="#0F0F0F")
 logo_label.pack(side="left", padx=10)  
