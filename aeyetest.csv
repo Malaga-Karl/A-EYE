@@ -52,13 +52,13 @@ offboard",No Syntax Error,,,,,
     captain(){
     fire(9 + ""Lucky"");
 }
-offboard",Syntax Error ,,,,,
+offboard",Syntax Error,,,,,
 "onboard
             theo(four)
 offboard",Syntax Error,,,,,
 "onboard 
             theo(a>5)
-offboard",No Syntax Error,,,,,
+offboard",Syntax Error,,,,,
 "onboard
 captain(){
 pint a = 5;
@@ -71,7 +71,7 @@ offboard",No Syntax Error,,,,,
              captain(){
              theo(3==3)
              }
-offboard",No Syntax Error,,,,,
+offboard",Syntax Error,,,,,
 "onboard 
              theo(a != b)
 offboard",Syntax Error,,,,,
@@ -79,15 +79,15 @@ offboard",Syntax Error,,,,,
              captain(){
              theo(5<=5)
              }
-offboard",No Syntax Error,,,,,
+offboard",Syntax Error,,,,,
 "onboard
 pint a = ;
-offboard",Syntax Error!,,,,,
+offboard",Syntax Error,,,,,
 "onboard 
              captain(){
              theo(10>=9)
              }
-offboard",No Syntax Error,,,,,
+offboard",Syntax Error,,,,,
 "onboard
    pint a = 1;
    captain(){
@@ -102,7 +102,7 @@ offboard",No Syntax Error,,,,,
 offboard",No Syntax Error,,,,,
 "onboard 
            altheo(a==2):
-offboard",Syntax Error!,,,,,
+offboard",Syntax Error,,,,,
 "onboard
         captain(){
         theo (a==2){}
@@ -111,7 +111,7 @@ offboard",Syntax Error!,,,,,
 offboard",No Syntax Error,,,,,
 "onboard 
            altheo(c==7);
-offboard",Syntax Error!,,,,,
+offboard",Syntax Error,,,,,
 "onboard
 captain(){
    theo (5 > a){
@@ -128,7 +128,7 @@ captain(){
 } theo(2==1){
     fire(""Amazing"")
 }
-}",Syntax Error!,,,,,
+}",Syntax Error,,,,,
 "onboard
 captain(){
 theo (7 < a){
@@ -139,13 +139,13 @@ theo (7 < a){
    fire(“a is equal to 5 ”);
 }
 }
-offboard",Syntax Error!,,,,,
+offboard",Syntax Error,,,,,
 "onboard
      doffy = load(enter number);
-offboard",Syntax Error ,,,,,
+offboard",Syntax Error,,,,,
 "onboard
 pint loyal = 5;
-offboard",Syntax Error ,,,,,
+offboard",Syntax Error,,,,,
 "onboard
 capatain() {
         pint a = 2 + = ;    
@@ -158,10 +158,10 @@ offboard",Syntax Error,,,,,
         captain(){
         pint a = 3500;
         }
-offboardoffboard",No Syntax Error,,,,,
+offboardoffboard",Syntax Error,,,,,
 "onboard
        pint a = { }
-offboard",Sytax Error,,,,,
+offboard",Syntax Error,,,,,
 "onboard
        pint []
 offboard",Syntax Error,,,,,
@@ -234,7 +234,7 @@ offboard",No Syntax Error,,,,,
         captain(){
        fleet x = """";
         }
-offboard",Syntax Error,,,,,
+offboard",No Syntax Error,,,,,
 "onboard
         captain(){
        }
@@ -283,12 +283,12 @@ offboard",No Syntax Error,,,,,
          captain() {
                   bull trula = Real; 
          }
-offboard",Syntax Error,,,,,
+offboard",No Syntax Error,,,,,
 "onboard 
          captain() {
                   True = real;
          }
-offboard",No Syntax Error,,,,,
+offboard",Syntax Error,,,,,
 "onboard 
          captain() {
                   bull falseVal = usopp;
@@ -298,7 +298,7 @@ offboard",No Syntax Error,,,,,
          captain() {
                   bull falseVal = Usopp;
          }
-offboard",Syntax Error,,,,,
+offboard",No Syntax Error,,,,,
 "onboard 
          captain() {
                   pint sumNum(pint numA, pint numB) {
@@ -316,7 +316,7 @@ offboard",No Syntax Error,,,,,
          captain() {
                   fire(this_is_error);
          }
-offboard",Syntax Error,,,,,
+offboard",No Syntax Error,,,,,
 "onboard
          captain() {
                   fire(""Print me!"");
@@ -366,7 +366,7 @@ helm(block){
  dagger:  fire(""""Not enrolled"""");
 }
 }
-offboard",No Syntax Error,,,,,
+offboard",Syntax Error,,,,,
 "onboard
 captain(){
 doffy color = ""Yellow"";
@@ -440,7 +440,7 @@ capatain() {
 pint a = 10;
 theo(x > 7){}
 }
-offboard",No Syntax Error,,,,,
+offboard",Syntax Error,,,,,
 "onboard
          captain() {
                  bull mabaho == real;
@@ -451,7 +451,7 @@ offboard",Syntax Error,,,,,
          captain() {
                   doffy greet1 = ""Kamsami!"";
                   doffy greet2 = ""Arigathanks!"";
-offboard",No Syntax Error,,,,,
+offboard",Syntax Error,,,,,
 "onboard
          captain() {
                   doffy greet1 = ""Kamsami!"";
@@ -820,7 +820,7 @@ offboard",No Syntax Error,,,,,
 	captain(){
 	}
 offboard
-",No Syntax Error,,,,,
+",Syntax Error,,,,,
 "onboard
         loyal bull bteam = real;
         captain(){
@@ -1108,7 +1108,7 @@ offboard",No Syntax Error,,,,,
                  }alt{
                         fire(`Largest number: {num3}`);
                  }
-offboard", Syntax Error,,,,,
+offboard",Syntax Error,,,,,
 "onboard 
          captain(){ 
                   pint year = 2024;
@@ -1815,4 +1815,4 @@ offboard",No Syntax Error,,,,,
      pint n = load(""enter a number: "");
      
 }
-offboard",,,,,,
+offboard",No Syntax Error,,,,,
