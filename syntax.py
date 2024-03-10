@@ -8,7 +8,7 @@ from position_class import *
 
 class SyntaxAnalyzer:
     def __init__(self, tokens):
-        self.tokens = tokens
+        self.tokens = [token for token in tokens if token.type not in [TT_SLCOMMENT, TT_MLCOMMENT]]
         self.current_token_idx = 0
         self.current_token = self.tokens[self.current_token_idx] if self.tokens else None
         self.errors = []
@@ -418,7 +418,7 @@ class SyntaxAnalyzer:
     # 58 {IDENTIFIER, PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, “nay”, λ, “(“, “len”, “load”, “[“}
     # 59 {BULL_LIT}
     def condition(self):
-        if self.current_token.type in [TT_DOFFY_LIT, TT_LPAREN, TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_LEN, TT_NAY]:
+        if self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET, TT_REAL, TT_USOPP]:
             if self.current_token.type == TT_NAY:
                 self.logical_op()
             else:
@@ -427,7 +427,7 @@ class SyntaxAnalyzer:
                 self.logical_keywords()
                 self.condition()
         else:
-            if not self.consume([TT_DOFFY_LIT, TT_LPAREN, TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_LEN, TT_NAY]):return
+            if not self.consume([TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET, TT_REAL, TT_USOPP]):return
 
     # 39
     # 40
