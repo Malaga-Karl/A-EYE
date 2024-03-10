@@ -44,6 +44,21 @@ class SyntaxAnalyzer:
         else:
             return None
 
+    def peek2(self):
+        next_token_idx = self.current_token_idx + 2
+        if next_token_idx < len(self.tokens):
+            return self.tokens[next_token_idx]
+        else:
+            return None
+
+    def peek_next_token(self, token_type):
+        next_token_idx = self.current_token_idx
+        while next_token_idx < len(self.tokens) and self.tokens[next_token_idx].type != token_type:
+            next_token_idx += 1
+            if next_token_idx < len(self.tokens) and self.tokens[next_token_idx].type == token_type:
+                if next_token_idx + 1 < len(self.tokens): return self.tokens[next_token_idx + 1]
+        return None
+
     def parse(self):
         self.program()
         if self.current_token is not None:
@@ -52,10 +67,11 @@ class SyntaxAnalyzer:
 
         return self.errors
 
-    # 1
+    # 1 {“onboard”}
     def program(self):
         if not self.consume([TT_ONBOARD]):return
         self.globall()
+        self.sub_function()
         if not self.consume([TT_CAPTAIN]):return
         if not self.consume([TT_LPAREN]):return
         if not self.consume([TT_RPAREN]):return
@@ -64,26 +80,114 @@ class SyntaxAnalyzer:
         if self.current_token.type == TT_HOME:
             self.home()
         if not self.consume([TT_RBRACKET]):return
-        if self.current_token.type in [TT_OFFBOARD, TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL, TT_VOID]:
-            self.sub_function()
-            if not self.consume([TT_OFFBOARD]):return
-        else:
-            if not self.consume([TT_OFFBOARD, TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL, TT_VOID]):return
+        if not self.consume([TT_OFFBOARD]):return
 
-    # 2
-    # 3
-    # 34
+    # 2 {“pint”, “fleet”, “doffy”, “bull”, “loyal”, λ}
+    # 3 {“pint”, “fleet”, “doffy”, “bull”, “loyal”}
+    # 4 {“void”, “pint”, “fleet”, “doffy”, “bull”, “loyal”, “captain”}
     def globall(self):
-        if self.current_token.type in [TT_CAPTAIN, TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL]:
-            if self.current_token.type != TT_CAPTAIN:
-                self.var_statement()
+        if self.current_token.type in [TT_CAPTAIN, TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL, TT_VOID]:
+            while self.peek2().type == TT_ASSIGN:
+                self.global_init()
                 if not self.consume([TT_SMCLN]):return
-            if self.current_token.type != TT_CAPTAIN:
-                self.globall()
         else:
             if not self.consume([TT_CAPTAIN, TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL]):return
 
-    # 4
+    # 5 {“pint”, “fleet”, “doffy”, “bull”}
+    # 6 {“loyal”}
+    def global_init(self):
+        if self.current_token.type in [TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_LOYAL]:
+            if self.current_token.type == TT_LOYAL:
+                self.loyal_init()
+            else:
+                self.var_dec()
+                if not self.consume([TT_ASSIGN]):return
+                self.global_val()
+        else:
+            if not self.consume([TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_LOYAL]):return
+
+    # 7 {“loyal”}
+    def loyal_init(self):
+        if not self.consume([TT_LOYAL]):return
+        self.var_init()
+
+    # 8 {PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, IDENTIFIER, “(“}
+    # 9 {“[“}
+    def global_val(self):
+        if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_USOPP, TT_REAL, TT_IDTFR, TT_LPAREN, TT_LSBRACKET]:
+            if self.current_token.type == TT_LSBRACKET:
+                self.global_array()
+            else:
+                self.literal()
+        else:
+            if not self.consume([TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_USOPP, TT_REAL, TT_IDTFR, TT_LPAREN, TT_LSBRACKET]):return
+
+    # 10 {PINT_LIT, FLEET_LIT}
+    # 13 {DOFFY_LIT}
+    # 14 {BULL_LIT}
+    # 18 {IDENTIFIER, PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, “(“, “[“}
+    def literal(self):
+        if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_USOPP, TT_REAL, TT_IDTFR, TT_LPAREN, TT_LSBRACKET]:
+            if self.peek().type not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]:
+                if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT]:
+                    self.num_value()
+                else: 
+                    if not self.consume([TT_DOFFY_LIT, TT_USOPP, TT_REAL]):return
+            else:
+                self.global_math()
+        else:
+            if not self.consume([TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_USOPP, TT_REAL, TT_IDTFR, TT_LPAREN, TT_LSBRACKET]):return
+
+    # 11 {PINT_LIT}
+    # 12 {FLEET_LIT}
+    def num_value(self):
+        if not self.consume([TT_PINT_LIT,TT_FLEET_LIT]):return
+
+    # 15 {“[“}
+    def global_array(self):
+        if not self.consume([TT_LSBRACKET]):return
+        self.global_val()
+        if self.current_token.type == TT_COMMA:
+            self.next_global_val()
+
+    # 16 {“,“}
+    # 17 {“]”}
+    def next_global_val(self):
+        if not self.consume([TT_COMMA]):return
+        self.global_val()
+        if self.current_token.type == TT_COMMA:
+            self.next_global_val()
+
+    # 19 {IDENTIFIER, PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, “(“, “[“}
+    def global_math(self):
+        if self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_LPAREN, TT_LSBRACKET]:
+            self.global_math_head()
+            self.mos()
+            self.global_math_tail()
+        else:
+            if not self.consume([TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_LPAREN, TT_LSBRACKET]):return
+
+    # 20 {PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, “[“}
+    # 21 {IDENTIFIER}
+    # 22 {“(“}
+    def global_math_head(self):
+        if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_LSBRACKET, TT_IDTFR, TT_LPAREN]:
+            if self.current_token.type == TT_IDTFR and self.peek().type in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]:
+                if not self.consume([TT_IDTFR]):return
+            elif self.current_token.type == TT_LPAREN:
+                if not self.consume([TT_LPAREN]):return
+                self.global_math()
+                if not self.consume([TT_RPAREN]):return
+            else:
+                self.global_val()
+        else:
+            if not self.consume([TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_LSBRACKET, TT_IDTFR, TT_LPAREN]):return
+
+    # 23 {IDENTIFIER, PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, “(“, “[“}
+    def global_math_tail(self):
+        self.global_math_head()
+
+    # 24 {“pint”, “fleet”, “doffy”, “bull”}
     def var_init(self):
         if self.current_token.type in [TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL]:
             self.var_dec()
@@ -97,96 +201,119 @@ class SyntaxAnalyzer:
         else:
             if not self.consume([TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL]):return
 
-    # 5
-    def loyal_init(self):
-        if not self.consume([TT_LOYAL]):return
-        self.var_init()
-        
-    # 6
+    # 25 {“pint”, “fleet”, “doffy”, “bull”}
     def var_dec(self):
         if self.current_token.type in [TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL]:
             self.d_type()
             if not self.consume([TT_IDTFR]):return
         else:
             if not self.consume([TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL]):return
-
-    # 8
-    # 9
-    def num_value(self):
-        if not self.consume([TT_PINT_LIT,TT_FLEET_LIT]):return
         
-    # 7
-    # 10
-    # 11
-    # 12
-    # 13
-    # 14
-    # 15
+    # 26 {PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, IDENTIFIER, “(“}
+    # 27 {IDENTIFIER}
+    # 33 {“(“, PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, IDENTIFIER, “len”, “load”, “[“}
+    # 34 {IDENTIFIER, “len”, “load”}
+    # 35 {“[“}
     def value(self):
-        if self.current_token.type in [TT_LPAREN, TT_USOPP, TT_REAL, TT_DOFFY_LIT, TT_LSBRACKET, TT_PINT_LIT, TT_FLEET_LIT, TT_IDTFR, TT_LEN, TT_LOAD]: 
-            if self.current_token.type == TT_LPAREN:
-                self.math_operation()
+        if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_IDTFR, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET]: 
+            if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP] and self.peek().type not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]:
+                self.literal()
+            elif self.current_token.type in [TT_IDTFR] and self.peek().type not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_LPAREN]:
+                if not self.consume([TT_IDTFR]):return
+                self.index()
+            elif self.current_token.type in [TT_IDTFR] and self.peek().type == TT_LPAREN and self.peek_next_token(TT_RPAREN) not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]:
+                self.func_call()
+            elif self.current_token.type in [TT_LSBRACKET] and self.peek_next_token(TT_RSBRACKET) not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]:
+                self.array()
             else:
-                if self.current_token.type in [TT_USOPP, TT_REAL, TT_DOFFY_LIT]: 
-                    if self.current_token.type == TT_DOFFY_LIT:
-                        while self.current_token.type == TT_DOFFY_LIT:
-                            if not self.consume([TT_DOFFY_LIT]):return
-                            if self.current_token.type == TT_PLUS and self.peek().type == TT_DOFFY_LIT:
-                                if not self.consume([TT_PLUS]):return
-                            else:
-                                break
-                    else:
-                        if not self.consume([TT_USOPP, TT_REAL]):return
-                else:
-                    if self.current_token.type != TT_LSBRACKET:
-                        if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT]:
-                            self.num_value()
-                            if self.current_token.type in [TT_RPAREN, TT_COMMA, TT_SMCLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_CLN, TT_RSBRACKET]: 
-                                if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN, TT_CLN, TT_RSBRACKET]:
-                                    self.mos()
-                                    self.math_tail()
-                            else:
-                                if not self.consume([TT_COMMA, TT_SMCLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_CLN, TT_RSBRACKET]):return
-                        elif self.current_token.type == TT_IDTFR:
-                            if not self.consume([TT_IDTFR]):return
-                            if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN, TT_CLN, TT_RSBRACKET]:
-                                if self.current_token.type != TT_LSBRACKET:
-                                    if self.current_token.type == TT_LPAREN:
-                                        if not self.consume([TT_LPAREN]):return
-                                        self.arguments()
-                                        if not self.consume([TT_RPAREN]):return
-                                    if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN]:
-                                        self.mos()
-                                        self.math_tail()
-                                else:
-                                    self.index()
-                                    if self.current_token.type == TT_LPAREN:
-                                        if not self.consume([TT_LPAREN]):return
-                                        self.arguments()
-                                        if not self.consume([TT_RPAREN]):return
-                                    if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN]:
-                                        self.mos()
-                                        self.math_tail()
-                        elif self.current_token.type in [TT_LEN, TT_LOAD]:
-                            self.func_call()
-                    else:
-                        self.array()
+                self.math_operation()
         else:
-            if not self.consume([TT_LPAREN, TT_USOPP, TT_REAL, TT_DOFFY_LIT, TT_LSBRACKET, TT_PINT_LIT, TT_FLEET_LIT, TT_IDTFR, TT_LEN, TT_LOAD]):return
+            if not self.consume([TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_IDTFR, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET]):return
 
-    # 16
+    # 28 {“[“, λ}
+    # 29 {“[“}
+    # 32 {“,”, “;”, “]”, “:”, “+”, “-”, “*”, ”/”, “%”, “**”, “//”, “)”, “[”, “<”, “>”, “<=”, “>=”, “==”, “!=”, “oro”, “and”}
+    def index(self):
+        if self.current_token.type in [TT_LSBRACKET, TT_COMMA, TT_SMCLN, TT_RSBRACKET, TT_CLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_RPAREN, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_ORO, TT_AND]:
+            if self.current_token.type == TT_LSBRACKET:
+                if not self.consume([TT_LSBRACKET]):return
+                self.indexer()
+                if not self.consume([TT_RSBRACKET]):return
+                if self.current_token.type == TT_LSBRACKET:
+                    self.index()
+        else:
+            if not self.consume([TT_LSBRACKET, TT_COMMA, TT_SMCLN, TT_RSBRACKET, TT_CLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_RPAREN, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_ORO, TT_AND]):return
+
+    # 30
+    # 31
+    def indexer(self):
+        if not self.consume([TT_IDTFR, TT_PINT_LIT]):return
+
+    # def value2(self):
+    #     if self.current_token.type in [TT_LPAREN, TT_USOPP, TT_REAL, TT_DOFFY_LIT, TT_LSBRACKET, TT_PINT_LIT, TT_FLEET_LIT, TT_IDTFR, TT_LEN, TT_LOAD]: 
+    #         if self.current_token.type == TT_LPAREN:
+    #             self.math_operation()
+    #         else:
+    #             if self.current_token.type in [TT_USOPP, TT_REAL, TT_DOFFY_LIT]: 
+    #                 if self.current_token.type == TT_DOFFY_LIT:
+    #                     while self.current_token.type == TT_DOFFY_LIT:
+    #                         if not self.consume([TT_DOFFY_LIT]):return
+    #                         if self.current_token.type == TT_PLUS and self.peek().type == TT_DOFFY_LIT:
+    #                             if not self.consume([TT_PLUS]):return
+    #                         else:
+    #                             break
+    #                 else:
+    #                     if not self.consume([TT_USOPP, TT_REAL]):return
+    #             else:
+    #                 if self.current_token.type != TT_LSBRACKET:
+    #                     if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT]:
+    #                         self.num_value()
+    #                         if self.current_token.type in [TT_RPAREN, TT_COMMA, TT_SMCLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_CLN, TT_RSBRACKET]: 
+    #                             if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN, TT_CLN, TT_RSBRACKET]:
+    #                                 self.mos()
+    #                                 self.math_tail()
+    #                         else:
+    #                             if not self.consume([TT_COMMA, TT_SMCLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_CLN, TT_RSBRACKET]):return
+    #                     elif self.current_token.type == TT_IDTFR:
+    #                         if not self.consume([TT_IDTFR]):return
+    #                         if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN, TT_CLN, TT_RSBRACKET]:
+    #                             if self.current_token.type != TT_LSBRACKET:
+    #                                 if self.current_token.type == TT_LPAREN:
+    #                                     if not self.consume([TT_LPAREN]):return
+    #                                     self.arguments()
+    #                                     if not self.consume([TT_RPAREN]):return
+    #                                 if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN]:
+    #                                     self.mos()
+    #                                     self.math_tail()
+    #                             else:
+    #                                 self.index()
+    #                                 if self.current_token.type == TT_LPAREN:
+    #                                     if not self.consume([TT_LPAREN]):return
+    #                                     self.arguments()
+    #                                     if not self.consume([TT_RPAREN]):return
+    #                                 if self.current_token.type not in [TT_COMMA, TT_SMCLN, TT_RPAREN]:
+    #                                     self.mos()
+    #                                     self.math_tail()
+    #                     elif self.current_token.type in [TT_LEN, TT_LOAD]:
+    #                         self.func_call()
+    #                 else:
+    #                     self.array()
+    #     else:
+    #         if not self.consume([TT_LPAREN, TT_USOPP, TT_REAL, TT_DOFFY_LIT, TT_LSBRACKET, TT_PINT_LIT, TT_FLEET_LIT, TT_IDTFR, TT_LEN, TT_LOAD]):return
+
+    # 36 {“(“, PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, IDENTIFIER, “len”, “load”, “[“}
     def math_operation(self):
-        if self.current_token.type in [TT_LPAREN, TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT]:
+        if self.current_token.type in [TT_LPAREN, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_IDTFR, TT_LEN, TT_LOAD, TT_LSBRACKET]:
             self.math_head()
             self.mos()
             self.math_tail()
         else:
-            if not self.consume([TT_LPAREN, TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT]):return
+            if not self.consume([TT_LPAREN, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_IDTFR, TT_LEN, TT_LOAD, TT_LSBRACKET]):return
 
-    # 17
-    # 18
+    # 37 {“(“}
+    # 38 {PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, IDENTIFIER, “(“, “len”, “load”, “[“}
     def math_head(self):
-        if self.current_token.type in [TT_LPAREN, TT_USOPP, TT_REAL, TT_DOFFY_LIT, TT_LSBRACKET, TT_PINT_LIT, TT_FLEET_LIT, TT_IDTFR]:
+        if self.current_token.type in [TT_LPAREN, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_IDTFR, TT_LEN, TT_LOAD, TT_LSBRACKET]:
             if self.current_token.type == TT_LPAREN:
                 if not self.consume([TT_LPAREN]):return
                 self.math_operation()
@@ -194,96 +321,104 @@ class SyntaxAnalyzer:
             else:
                 self.value()
         else:
-            if not self.consume([TT_LPAREN, TT_USOPP, TT_REAL, TT_DOFFY_LIT, TT_LSBRACKET, TT_PINT_LIT, TT_FLEET_LIT, TT_IDTFR]):return
+            if not self.consume([TT_LPAREN, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_IDTFR, TT_LEN, TT_LOAD, TT_LSBRACKET]):return
 
-    # 19
+    # 39 {“(“, PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, IDENTIFIER, “len”, “load”, “[“}
     def math_tail(self):
-        if self.current_token.type in [TT_LPAREN, TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT]:
-            if self.current_token.type == TT_LPAREN:
-                self.math_operation()
-            else:
-                self.math_head()
+        if self.current_token.type in [TT_LPAREN, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_IDTFR, TT_LEN, TT_LOAD, TT_LSBRACKET]:         
+            self.math_head()
         else:
-            if not self.consume([TT_LPAREN, TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT]):return
+            if not self.consume([TT_LPAREN, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_IDTFR, TT_LEN, TT_LOAD, TT_LSBRACKET]):return
 
-    # 20
+    # 40 {“[“}
     def array(self):
         if not self.consume([TT_LSBRACKET]):return
         self.value()
+        self.next_value()
+        if not self.consume([TT_RSBRACKET]):return
+
+    # 41 {“,“}
+    # 42 {“]”}
+    def next_value(self):
         if self.current_token.type in [TT_COMMA, TT_RSBRACKET]:
             if self.current_token.type == TT_COMMA:
+                if not self.consume([TT_COMMA]):return
+                self.value()
                 self.next_value()
-            if not self.consume([TT_RSBRACKET]):return
         else:
             if not self.consume([TT_COMMA, TT_RSBRACKET]):return
 
-    # 21
-    # 22
-    def next_value(self):
-        if not self.consume([TT_COMMA]):return
-        self.value()
-        if self.current_token.type == TT_COMMA:
-            self.next_value()
-
-    # 23
-    # 24
+    # 43 {“,” , λ}
+    # 44 {“;”}
     def var_init_tail(self):
-        self.next2()
-
-    # 25
-    # 26
+        if self.current_token.type in [TT_COMMA, TT_SMCLN]:
+            if self.current_token.type == TT_COMMA:
+                self.next2()
+        else:
+            if not self.consume([TT_COMMA, TT_SMCLN]):return
+        
+    # 45 {“,”}
+    # 46 {“;”}
     def next2(self):
-        if self.current_token.type == TT_COMMA:
-            if not self.consume([TT_COMMA]):return
-            self.var_assign()
-            self.next2()
+        if self.current_token.type in [TT_COMMA, TT_SMCLN]:
+            if self.current_token.type == TT_COMMA:
+                if not self.consume([TT_COMMA]):return
+                self.var_assign()
+                self.next2()
+        else:
+            if not self.consume([TT_COMMA, TT_SMCLN]):return
 
-    # 27
+    # 47 {IDENTIFIER}
     def var_assign(self):
         if not self.consume([TT_IDTFR]):return
         if not self.consume([TT_ASSIGN]):return
         self.value()
 
-    # 28
-    # 29
-    # 30
-    # 31
+    # 48 {“pint”}
+    # 49 {“fleet”}
+    # 50 {“bull”}
+    # 51 {“doffy”}
     def d_type(self):
         if not self.consume([TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL]):return
 
-    # 32
-    # 33
+    # 52 {“pint”, “fleet”, “doffy”, “bull”}
+    # 53 {“loyal”}
+    # 54 {IDENTIFIER}
     def var_statement(self):
-        if self.current_token.type in [TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL, TT_LOYAL]: 
+        if self.current_token.type in [TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_LOYAL, TT_IDTFR]: 
             if self.current_token.type in [TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL]:
                 self.var_init()
-            if self.current_token.type == TT_LOYAL:
+            elif self.current_token.type == TT_LOYAL:
                 self.loyal_init()
+            elif self.current_token.type == TT_IDTFR:
+                self.var_assign()
         else:
-            if not self.consume([TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL, TT_LOYAL]):return
+            if not self.consume([TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_LOYAL, TT_IDTFR]):return
 
-    # 35
+    # 55 {"theo"}
     def if_statement(self):
         if not self.consume([TT_THEO]):return
         self.conditional()
 
-    # 36
+    # 56 {“(“}
     def conditional(self):
         if not self.consume([TT_LPAREN]):return
         self.condition()
         if not self.consume([TT_RPAREN]):return
         if not self.consume([TT_LBRACKET]):return
         self.statement()
+        self.home()
         if not self.consume([TT_RBRACKET]):return
         if self.current_token.type == TT_ALTHEO:
             self.else_if_statement()
         if self.current_token.type == TT_ALT:
             self.else_statement()    
 
-    # 37
-    # 38
+    # 57 {IDENTIFIER, PINT_LIT, FLEET_LIT, DOFFY_LIT, “nay”, “(“, “len”, “load”, “[“}
+    # 58 {IDENTIFIER, PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, “nay”, λ, “(“, “len”, “load”, “[“}
+    # 59 {BULL_LIT}
     def condition(self):
-        if self.current_token.type in [TT_DOFFY_LIT, TT_LPAREN, TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_LEN, TT_NAY]:
+        if self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET, TT_REAL, TT_USOPP]:
             if self.current_token.type == TT_NAY:
                 self.logical_op()
             else:
@@ -292,7 +427,7 @@ class SyntaxAnalyzer:
                 self.logical_keywords()
                 self.condition()
         else:
-            if not self.consume([TT_DOFFY_LIT, TT_LPAREN, TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_LEN, TT_NAY]):return
+            if not self.consume([TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET, TT_REAL, TT_USOPP]):return
 
     # 39
     # 40
@@ -330,8 +465,6 @@ class SyntaxAnalyzer:
         self.statement()
         if self.current_token.type == TT_CHEST: 
             self.switch_cond_tail()
-        if self.current_token.type not in [TT_CHEST, TT_DAGGER]:
-            if not self.consume([TT_CHEST, TT_DAGGER]):return
 
     # 46
     # 47
@@ -661,10 +794,7 @@ class SyntaxAnalyzer:
     # 119
     def home(self):
         if not self.consume([TT_HOME]):return
-        if not self.consume([TT_LPAREN]):return
         self.value()
-        if not self.consume([TT_RPAREN]):return
-        if not self.consume([TT_SMCLN]):return
 
     # 120
     # 121
@@ -714,21 +844,6 @@ class SyntaxAnalyzer:
     # 133
     def control(self):
         if not self.consume([TT_LEAK, TT_SAIL, TT_PASS]):return
-
-    # 134
-    # 135
-    # 138
-    def index(self):
-        if not self.consume([TT_LSBRACKET]):return
-        self.indexer()
-        if not self.consume([TT_RSBRACKET]):return
-        if self.current_token.type == TT_LSBRACKET:
-            self.index()
-
-    # 136
-    # 137
-    def indexer(self):
-        if not self.consume([TT_IDTFR, TT_PINT_LIT]):return
 
 def analyze_syntax(tokens):
     syntax_analyzer = SyntaxAnalyzer(tokens)
