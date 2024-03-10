@@ -331,7 +331,7 @@ class Lexer:
                         if word[2] == 'o' and len(word) >= 4:
                             if word[3] == 'p' and len(word) >= 5:
                                 if word[4] == 'p' and len(word) == 5:
-                                    if self.current_char == ';':
+                                    if self.current_char != None and self.current_char in DELIM18:
                                         tokens.append(Token(self.pos.ln + 1, TT_USOPP, word))
                                         isIDNTFR = False
                                     else:
@@ -541,7 +541,7 @@ class Lexer:
                 self.advance()
                 if self.current_char == '=':
                     self.advance()
-                    if self.current_char in DELIM6:
+                    if self.current_char != None and self.current_char in DELIM6:
                         tokens.append(Token(self.pos.ln + 1, TT_NOTEQUAL, '!='))
                     else:
                         errors.append(LexicalError(self.pos.ln + 1, "!="))
@@ -551,11 +551,11 @@ class Lexer:
                 self.advance()
                 if self.current_char == '=':
                     self.advance()
-                    if self.current_char in DELIM6:
+                    if self.current_char != None and self.current_char in DELIM6:
                         tokens.append(Token(self.pos.ln + 1, TT_LEQUAL, '<='))
                     else:
                         errors.append(LexicalError(self.pos.ln + 1, "<="))
-                elif self.current_char in DELIM9:
+                elif self.current_char != None and self.current_char in DELIM9:
                     tokens.append(Token(self.pos.ln + 1, TT_LTHAN, '<'))
                 else:
                     errors.append(LexicalError(self.pos.ln + 1, "<"))
@@ -563,11 +563,11 @@ class Lexer:
                 self.advance()
                 if self.current_char == '=':
                     self.advance()
-                    if self.current_char in DELIM6:
+                    if self.current_char != None and self.current_char in DELIM6:
                         tokens.append(Token(self.pos.ln + 1, TT_GEQUAL, '>='))
                     else:
                         errors.append(LexicalError(self.pos.ln + 1, ">="))
-                elif self.current_char in DELIM9:
+                elif self.current_char != None and self.current_char in DELIM9:
                     tokens.append(Token(self.pos.ln + 1, TT_GTHAN, '>'))
                 else:
                     errors.append(LexicalError(self.pos.ln + 1, ">"))
