@@ -678,7 +678,7 @@ class SyntaxAnalyzer:
             elif self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT] and self.peek() is not None and self.peek().type not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_AND, TT_ORO, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_RPAREN, TT_SMCLN]:
                 if not self.consume([TT_PINT_LIT, TT_FLEET_LIT]):return
                 if not self.consume([TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_AND, TT_ORO, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_RPAREN]):return
-            elif self.current_token.type == TT_IDTFR and self.peek() is not None and self.peek().type in [TT_LSBRACKET, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_AND, TT_ORO, TT_SMCLN]:
+            elif self.current_token.type == TT_IDTFR and self.peek() is not None and self.peek().type in [TT_LSBRACKET, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_AND, TT_ORO, TT_SMCLN, TT_RPAREN]:
                 if not self.consume([TT_IDTFR]):return
                 self.index()
             elif self.current_token.type == TT_PINT_LIT and self.peek() is not None and self.peek().type in [TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_RPAREN, TT_AND, TT_ORO, TT_SMCLN]:
