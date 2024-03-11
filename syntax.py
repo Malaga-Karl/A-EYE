@@ -112,7 +112,10 @@ class SyntaxAnalyzer:
         if self.current_token.type in [TT_CAPTAIN, TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL, TT_VOID]:
             while (self.peek2() is not None and self.peek2().type == TT_ASSIGN) or self.current_token.type == TT_LOYAL:
                 self.global_init()
-                if not self.consume([TT_SMCLN]):return
+                if self.current_token.type in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_SMCLN]:
+                    if not self.consume([TT_SMCLN]):return
+                else:
+                    if not self.consume([TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_SMCLN]):return
         else:
             if not self.consume([TT_CAPTAIN, TT_PINT,TT_FLEET,TT_DOFFY,TT_BULL,TT_LOYAL]):return
 
@@ -138,12 +141,31 @@ class SyntaxAnalyzer:
 
     # 8 {PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, IDENTIFIER, “(“}
     # 9 {“[“}
+    # 158 {IDENTIFIER}
     def global_val(self):
         if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_USOPP, TT_REAL, TT_IDTFR, TT_LPAREN, TT_LSBRACKET]:
             if self.current_token.type == TT_LSBRACKET:
                 self.global_array()
+            elif self.current_token.type == TT_IDTFR and self.peek() is not None and self.peek().type in [TT_LSBRACKET, TT_SMCLN]:
+                if not self.consume([TT_IDTFR]):return
+                self.index()
+            elif self.current_token.type == TT_IDTFR and self.peek() is not None and self.peek().type not in [TT_LSBRACKET, TT_SMCLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]:
+                if not self.consume([TT_IDTFR]):return
+                if not self.consume([TT_LSBRACKET, TT_SMCLN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]):return
             else:
                 self.literal()
+        else:
+            if not self.consume([TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_USOPP, TT_REAL, TT_IDTFR, TT_LPAREN, TT_LSBRACKET]):return
+    
+    def global_val2(self):
+        if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_USOPP, TT_REAL, TT_IDTFR, TT_LPAREN, TT_LSBRACKET]:
+            if self.current_token.type == TT_LSBRACKET:
+                self.global_array()
+            elif self.current_token.type == TT_IDTFR:
+                if not self.consume([TT_IDTFR]):return
+                self.index()
+            else:
+                self.literal2()
         else:
             if not self.consume([TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_USOPP, TT_REAL, TT_IDTFR, TT_LPAREN, TT_LSBRACKET]):return
 
@@ -163,6 +185,18 @@ class SyntaxAnalyzer:
                     if not self.consume([TT_DOFFY_LIT, TT_USOPP, TT_REAL]):return
             else:
                 self.global_math()
+        else:
+            if not self.consume([TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_USOPP, TT_REAL, TT_IDTFR, TT_LPAREN, TT_LSBRACKET]):return
+
+    def literal2(self):
+        if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_USOPP, TT_REAL, TT_IDTFR, TT_LPAREN, TT_LSBRACKET]:
+            if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT]:
+                self.num_value()
+            elif self.current_token.type == TT_IDTFR:
+                if not self.consume([TT_IDTFR]):return
+                if not self.consume([TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]):return
+            else: 
+                if not self.consume([TT_DOFFY_LIT, TT_USOPP, TT_REAL]):return
         else:
             if not self.consume([TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_USOPP, TT_REAL, TT_IDTFR, TT_LPAREN, TT_LSBRACKET]):return
 
@@ -207,7 +241,7 @@ class SyntaxAnalyzer:
                 self.global_math()
                 if not self.consume([TT_RPAREN]):return
             else:
-                self.global_val()
+                self.global_val2()
         else:
             if not self.consume([TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_LSBRACKET, TT_IDTFR, TT_LPAREN]):return
 
