@@ -199,7 +199,7 @@ class Lexer:
                                 else:
                                     errors.append(LexicalError(self.pos.ln + 1, word))
                                     isIDNTFR = False
-                        elif word[2] == 'n' and len(word) == 4:
+                        elif word[2] == 'n' and len(word) == 3:
                             if self.current_char == '(':
                                 tokens.append(Token(self.pos.ln + 1, TT_LEN, word))
                                 isIDNTFR = False
