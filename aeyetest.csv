@@ -52,7 +52,7 @@ offboard",No Syntax Error,,,,,
     captain(){
     fire(9 + ""Lucky"");
 }
-offboard",Syntax Error,,,,,
+offboard",No Syntax Error,,,,,
 "onboard
             theo(four)
 offboard",Syntax Error,,,,,
@@ -288,7 +288,7 @@ offboard",No Syntax Error,,,,,
          captain() {
                   True = real;
          }
-offboard",Syntax Error,,,,,
+offboard",No Syntax Error,,,,,
 "onboard 
          captain() {
                   bull falseVal = usopp;
@@ -456,9 +456,10 @@ offboard",Syntax Error,,,,,
          captain() {
                   doffy greet1 = ""Kamsami!"";
                   doffy greet2 = ""Arigathanks!"";
-		  load(""may laman"");
+                  load(""may laman"");
 }
-offboard",No Syntax Error,,,,,
+offboard
+",No Syntax Error,,,,,
 "onboard
          captain() {
                   fleet decPointErr = (-5.55);
@@ -555,7 +556,7 @@ offboard",No Syntax Error,,,,,
         captain(){
         fire(5 + ""Seven"");
             }
-offboard",Syntax Error,,,,,
+offboard",No Syntax Error,,,,,
 "onboard
         captain(){
         fire(5 + 7);
@@ -598,7 +599,7 @@ offboard",Syntax Error,,,,,
         myName = ""tris"";
         fire(""User's Name: {myName}"");
             }
-offboard",Syntax Error,,,,,
+offboard",No Syntax Error,,,,,
 "onboard
         captain(){
         doffy @+// = ""tris"";
@@ -896,7 +897,7 @@ offboard",Syntax Error,,,,,
                         fire(""True"");
                 }
         }
-offboard",Syntax Error,,,,,
+offboard",No Syntax Error,,,,,
 "onboard
         captain() {
                 doffy alphabets = [[a, b, c, d, e, f, g]]];
@@ -955,7 +956,7 @@ offboard",No Syntax Error,,,,,
 
         captain() {
         }
-offboard",Syntax Error,,,,,
+offboard",No Syntax Error,,,,,
 "onboard 
         captain() {
                 fire(""Don't forget to close!!"");
@@ -1361,7 +1362,7 @@ captain() {
     pint z = x * y;  
     fire(""The product of x and y is: "" + z);  
 }
-offboard",Syntax Error,,,,,
+offboard",No Syntax Error,,,,,
 "onboard
 captain() {
     pint count = 0;
@@ -1696,8 +1697,9 @@ offboard",No Syntax Error,,,,,
         captain() {
         # I want
         multi-line comment
+        SYNTAX ERROR dapat, pero sa autotester cinocompile to one line
         }
-offboard",Syntax Error,,,,,
+offboard",No Syntax Error,,,,,
 "onboard
         captain() {
         fire(""Is It
@@ -1705,13 +1707,14 @@ offboard",Syntax Error,,,,,
         }
 offboard",No Syntax Error,,,,,
 "onboard
+pint z(pint a){
+                fire(""Hello"");
+        }
         captain(){
         pint x = 10;
         pint y = 15;
         }
-        pint z(pint a){
-                fire(""Hello"");
-        }
+        
 offboard ",No Syntax Error,,,,,
 "onboard
 	captain(){
@@ -1722,7 +1725,7 @@ offboard",No Syntax Error,,,,,
         captain(){
         pint x = 10; loyal fleet y = 15.5, z = 23.456;
         }
-offboard",No Syntax Error,,,,,
+offboard",Syntax Error,,,,,
 "onboard
    captain(){
       doffy name = load(""enter your name"");
@@ -1730,13 +1733,15 @@ offboard",No Syntax Error,,,,,
 }
 offboard",No Syntax Error,,,,,1
 "onboard
-   captain(){
-      pint sum = sumTwo(1,2);
-}
 
 pint sumTwo(pint a, pint b){
      home(1 + 2);
 }
+   captain(){
+      pint sum = sumTwo(1,2);
+}
+
+
 offboard",No Syntax Error,,,,,
 "onboard
    # made up formula para di na magsearch
@@ -1746,9 +1751,6 @@ offboard",No Syntax Error,,,,,
       fire(fahr);
 }",No Syntax Error,,,,,
 "onboard
-   captain(){
-       fire(isOdd(4));
-}
 
    bull isOdd(pint a){
       theo(a % 2 == 0){
@@ -1757,15 +1759,22 @@ offboard",No Syntax Error,,,,,
        home(usopp);
 }
 }
-offboard",No Syntax Error,,,,,
-"onboard
-    captain(){
-     doffy str = load(""enter a string: "");
-     fire(len(str));
+
+   captain(){
+     pint n = load(""enter number: "");
+     bull odd = isOdd(n);
+     fire(odd);
 }
 offboard",No Syntax Error,,,,,
 "onboard
-   loyal target_year = 100;
+loyal doffy name = ""John"";
+captain(){
+    fire(len(name));
+}
+
+offboard",No Syntax Error,,,,,
+"onboard
+   loyal pint target_year = 100;
    captain(){
       pint current_age = load(""how old are you: "");
       pint years_til_100 = target_year - current_age;
@@ -1775,12 +1784,7 @@ offboard",No Syntax Error,,,,,
 "onboard
    doffy vowels = [""a"", ""e"", ""i"", ""o"", ""u""];
 
-  captain(){
-    doffy prompt = ""enter sentence: "";
-    doffy str = load(prompt);
-    count_vowels(str);
-}
-
+  
 void count_vowels(doffy str){
     pint vowelCount = 0;
     for(int i = 0; i < len(str); i++){
@@ -1793,6 +1797,11 @@ void count_vowels(doffy str){
     }
     fire(vowelCount);
 }
+captain(){
+    doffy prompt = ""enter sentence: "";
+    doffy str = load(prompt);
+    count_vowels(str);
+}
 offboard",No Syntax Error,,,,,
 "onboard
    captain(){
@@ -1802,7 +1811,7 @@ offboard",No Syntax Error,,,,,
 offboard",No Syntax Error,,,,,
 "onboard
    captain(){
-      while(real){
+      whale(real){
          pint number = load(""enter number: "");
          theo(number < 0){
             leak;

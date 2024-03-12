@@ -180,7 +180,7 @@ screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 root.attributes("-fullscreen", True)  # Set full screen
 root.configure(bg="#373737")
-icon_image = tk.PhotoImage(file="A-Eye Logo.png")
+icon_image = tk.PhotoImage(file="A-EYE\A-Eye Logo.png")
 root.iconphoto(True, icon_image)
 
 # gif_path = "background.gif"
@@ -215,7 +215,7 @@ frame_navbar = tk.Frame(root, bg="#0F0F0F")
 frame_navbar.place(x=0, y=0, width=screen_width, height=50)
 
 #A-Eye Logo
-logo_image = tk.PhotoImage(file="A-Eye Logo.png") 
+logo_image = tk.PhotoImage(file="A-EYE\A-Eye Logo.png") 
 logo_image = logo_image.subsample(7, 7)  
 logo_label = tk.Label(frame_navbar, image=logo_image, bg="#0F0F0F")
 logo_label.pack(side="left", padx=10)  
