@@ -211,6 +211,7 @@ class SyntaxAnalyzer:
         self.global_val()
         if self.current_token.type == TT_COMMA:
             self.next_global_val()
+        if not self.consume([TT_RSBRACKET]):return
 
     # 16 {“,“}
     # 17 {“]”}
@@ -1028,7 +1029,9 @@ class SyntaxAnalyzer:
     # 154 {“}”, “home”, “leak”, “pint”, “fleet”, “doffy”, “bull”, “theo”, “helm”, “four”, “whale”, IDENTIFIER, “len”, “fire”, “leak”, “sail”, “pass”, “load”}
     def statement(self):
         if self.current_token.type in [TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_LOYAL, TT_IDTFR, TT_THEO, TT_HELM, TT_FOUR, TT_WHALE, TT_LOAD, TT_FIRE, TT_LEN, TT_LEAK, TT_SAIL, TT_PASS, TT_RBRACKET, TT_HOME]: 
-            if self.current_token.type in [TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_LOYAL, TT_IDTFR] and self.peek() is not None and self.peek().type not in [TT_INCR, TT_DECR]: 
+            if self.current_token.type in [TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_LOYAL, TT_IDTFR] and self.peek() is not None and self.peek().type not in [TT_INCR, TT_DECR, TT_LPAREN]: 
+                if self.current_token.type == TT_IDTFR and self.peek() is not None and self.peek().type != TT_ASSIGN:
+                    if not self.consume([TT_ASSIGN, TT_LPAREN]):return
                 self.var_statement()
                 if not self.consume([TT_SMCLN]):return
             elif self.current_token.type == TT_THEO:
@@ -1039,6 +1042,7 @@ class SyntaxAnalyzer:
                 self.loop_statement()
             elif self.current_token.type in [TT_IDTFR, TT_LEN, TT_LOAD] and self.peek() is not None and self.peek().type == TT_LPAREN: 
                 self.func_call()
+                if not self.consume([TT_SMCLN]):return
             elif self.current_token.type == TT_FIRE:
                 self.output_statement()
                 if not self.consume([TT_SMCLN]):return
