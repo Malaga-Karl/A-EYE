@@ -361,7 +361,8 @@ frame_terminal.place(x=85, y=534)
 lbl_terminal = tk.Label(frame_terminal, text="TERMINAL :", font=("Pirate Scroll", 14), bg="#0F0F0F", fg="#dfd1be") 
 lbl_terminal.place(x=10, y=5)
 
-terminal_text = tk.Text(frame_terminal, bg="#0F0F0F", fg="#FF6961", font=("Courier New", 12), width=int(screen_width*0.65), height=15, relief="flat")
+# Create the terminal text widget with the calculated width
+terminal_text = tk.Text(frame_terminal, bg="#0F0F0F", fg="#FF6961", font=("Courier New", 12), width=90, height=16, relief="flat", wrap="word")
 terminal_text.place(x=10, y=30)
 terminal_text.config(state="disabled")
 
@@ -370,12 +371,5 @@ terminal_scrollbar.place(x=985, y=3, height=324)
 terminal_text['yscrollcommand'] = terminal_scrollbar.set
 
 style.configure("Vertical.TScrollbar", troughcolor="#808080", gripcount=0, relief="flat")
-
-horizontal_scrollbar = ttk.Scrollbar(frame_terminal, orient=tk.HORIZONTAL, command=terminal_text.xview, style="Horizontal.TScrollbar")
-horizontal_scrollbar.place(x=8, y=309, width=974)
-terminal_text['xscrollcommand'] = horizontal_scrollbar.set
-
-style.configure("Horizontal.TScrollbar", troughcolor="#808080", gripcount=0, relief="flat")
-
 
 root.mainloop()
