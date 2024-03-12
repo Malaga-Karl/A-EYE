@@ -141,11 +141,14 @@ class SyntaxAnalyzer:
 
     # 8 {PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT, IDENTIFIER, “(“}
     # 9 {“[“}
-    # 158 {IDENTIFIER}
+    # 158 {IDENTIFIER} fix
     def global_val(self):
         if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_USOPP, TT_REAL, TT_IDTFR, TT_LPAREN, TT_LSBRACKET]:
             if self.current_token.type == TT_LSBRACKET:
-                self.global_array()
+                if self.peek_next_token(TT_RSBRACKET) is not None and self.peek_next_token(TT_RSBRACKET).type not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]:
+                    self.global_array()
+                else:
+                    self.global_math()
             elif self.current_token.type == TT_IDTFR and self.peek() is not None and self.peek().type in [TT_LSBRACKET, TT_SMCLN]:
                 if not self.consume([TT_IDTFR]):return
                 self.index()
@@ -686,7 +689,7 @@ class SyntaxAnalyzer:
                 if not self.consume([TT_PINT_LIT]):return
             elif self.current_token.type == TT_FLEET_LIT and self.peek() is not None and self.peek().type in [TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_RPAREN, TT_AND, TT_ORO, TT_SMCLN]:
                 if not self.consume([TT_FLEET_LIT]):return
-            elif self.current_token.type in [TT_IDTFR, TT_LEN, TT_LOAD] and self.peek() is not None and self.peek().type == TT_LPAREN and self.peek_next_token(TT_RPAREN) is not None and self.peek_next_token(TT_RPAREN).type in [TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_RPAREN]:
+            elif self.current_token.type in [TT_IDTFR, TT_LEN, TT_LOAD] and self.peek() is not None and self.peek().type == TT_LPAREN and self.peek_next_token(TT_RPAREN) is not None and self.peek_next_token(TT_RPAREN).type in [TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_RPAREN, TT_SMCLN]:
                 self.func_call()
             elif self.is_relational_or_logical_comp() == True or self.current_token.type == TT_NAY:
                 self.logical_op()
