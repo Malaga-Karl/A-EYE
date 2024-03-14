@@ -731,7 +731,7 @@ doffy concatIntegers() {
     fire(num1);
     fire(num2);
   }
-offboard",No Syntax Error,,,,,
+offboard",Syntax Error,,,,,
 "onboard
 	captain(){
 	}
@@ -1787,8 +1787,8 @@ offboard",No Syntax Error,,,,,
   
 void count_vowels(doffy str){
     pint vowelCount = 0;
-    for(int i = 0; i < len(str); i++){
-       for(int j = 0; j < len(vowels); j++){
+    four(pint i = 0; i < len(str); i++){
+       four(pint j = 0; j < len(vowels); j++){
           theo(str[i] == vowels[j]){
              vowelCount++;
              leak;
@@ -1821,7 +1821,85 @@ offboard",No Syntax Error,,,,,
 offboard",No Syntax Error,,,,,
 "onboard
    captain(){
-     pint n = load(""enter a number: "");
+     four(pint i = 1; i <= 20; i++){
+      theo(i % 2 == 0){
+        fire(i);
+}
+}
      
 }
+offboard",No Syntax Error,,,,,
+"onboard
+
+captain(){
+   pint n = load(""enter number to factorial"");
+   pint factorial = 1;	
+   four(pint i = n; i > 0; i--){
+           factorial = factorial * i;
+}
+   fire(factorial);
+}
+
+offboard",No Syntax Error,,,,,
+"onboard
+
+pint arr = [1,2,3,4,5];
+
+captain(){
+   pint sum = 0;
+   four(pint i = 0; i < len(arr); i++){
+      sum = sum + arr[i];
+}
+   fire(sum);
+}
+
+offboard",No Syntax Error,,,,,
+"onboard
+pint arr = [1,5,3,2,6,2];
+captain(){
+   pint max = 0;
+   four(pint i = 0; i < len(arr); i++){
+     theo(arr[i] > max){
+       max = arr[i];
+}
+}
+   fire(max);
+}
+
+offboard",No Syntax Error,,,,,
+"onboard
+   doffy vowels = [""a"", ""e"", ""i"", ""o"", ""u""];
+
+
+
+void count_vowels(doffy str){
+    pint vowelCount = 0;
+    four(pint i = 0; i < len(str); i++){
+       four(pint j = 0; j < len(vowels); j++){
+          theo(str[i] == vowels[j]){
+             vowelCount++;
+             leak;
+          }
+       }
+    }
+    fire(vowelCount);
+}
+captain(){
+    doffy prompt = ""enter sentence: "";
+    doffy str = load(prompt);
+    count_vowels(str);
+}
+
+offboard
+
+",No Syntax Error,,,,,
+"onboard
+
+pint arr = [1,2,3] + [4];
+pint arr2 = arr + [5];
+
+captain(){
+   fire(arr2);
+}
+
 offboard",No Syntax Error,,,,,
