@@ -129,8 +129,31 @@ class SyntaxAnalyzer:
                 self.var_dec()
                 if not self.consume([TT_ASSIGN]):return
                 self.global_val()
+                self.global_init_tail()
         else:
             if not self.consume([TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_LOYAL]):return
+            
+    def global_init_tail(self):
+        if self.current_token.type in [TT_COMMA, TT_SMCLN]:
+            if self.current_token.type == TT_COMMA:
+                self.next2_global()
+        else:
+            if not self.consume([TT_COMMA, TT_SMCLN]):return
+            
+    def next2_global(self):
+        if self.current_token.type in [TT_COMMA, TT_SMCLN]:
+            if self.current_token.type == TT_COMMA:
+                if not self.consume([TT_COMMA]):return
+                self.var_assign_global()
+                self.next2_global()
+        else:
+            if not self.consume([TT_COMMA, TT_SMCLN]):return
+
+    # 47 {IDENTIFIER}
+    def var_assign_global(self):
+        if not self.consume([TT_IDTFR]):return
+        if not self.consume([TT_ASSIGN]):return
+        self.global_val()
 
     # 7 {“loyal”}
     def loyal_init(self):
@@ -563,7 +586,11 @@ class SyntaxAnalyzer:
                 if not self.consume([TT_ALT]):return
                 if not self.consume([TT_LBRACKET]):return
                 self.statement()
-                self.home()
+                # 154 {“}”, “home”, “leak”, “pint”, “fleet”, “doffy”, “bull”, “theo”, “helm”, “four”, “whale”, IDENTIFIER, “len”, “fire”, “leak”, “sail”, “pass”, “load”}
+                if self.current_token.type in [TT_HOME, TT_RBRACKET, TT_LEAK, TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_THEO, TT_HELM, TT_FOUR, TT_WHALE, TT_IDTFR, TT_LEN, TT_FIRE, TT_SAIL, TT_PASS, TT_LOAD]:
+                    self.home()
+                else:
+                    if not self.consume([TT_HOME, TT_RBRACKET, TT_LEAK, TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_THEO, TT_HELM, TT_FOUR, TT_WHALE, TT_IDTFR, TT_LEN, TT_FIRE, TT_SAIL, TT_PASS, TT_LOAD]):return
                 if not self.consume([TT_RBRACKET]):return
         else:
             if not self.consume([TT_ALT, TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_THEO, TT_HELM, TT_FOUR, TT_WHALE, TT_IDTFR, TT_LEN, TT_FIRE, TT_LEAK, TT_SAIL, TT_PASS, TT_LOAD]):return
@@ -612,10 +639,12 @@ class SyntaxAnalyzer:
 
     # 72 {IDENTIFIER, PINT_LIT, FLEET_LIT, DOFFY_LIT, “nay”, “(“, “len”, “load”, “[“}
     # 73 {DOFFY_LIT}
-    # 74 {IDENTIFIER, real, usopp} 
+    # 74 {IDENTIFIER, real, usopp} fix
     def relational_comp(self):
         if self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET, TT_REAL, TT_USOPP]: 
-            if self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET]: 
+            print(self.peek().type)
+            print(self.peek2().type)
+            if self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET] and self.peek2() is not None and self.peek2().type not in [TT_REAL, TT_USOPP]: 
                 self.expression()
                 self.comparator()
                 self.expression2()
@@ -901,7 +930,10 @@ class SyntaxAnalyzer:
                 if not self.consume([TT_RPAREN]):return
                 if not self.consume([TT_LBRACKET]):return
                 self.statement()
-                self.home()
+                if self.current_token.type in [TT_HOME, TT_RBRACKET, TT_LEAK, TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_THEO, TT_HELM, TT_FOUR, TT_WHALE, TT_IDTFR, TT_LEN, TT_FIRE, TT_SAIL, TT_PASS, TT_LOAD]:
+                    self.home()
+                else:
+                    if not self.consume([TT_HOME, TT_RBRACKET, TT_LEAK, TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_THEO, TT_HELM, TT_FOUR, TT_WHALE, TT_IDTFR, TT_LEN, TT_FIRE, TT_SAIL, TT_PASS, TT_LOAD]):return
                 if not self.consume([TT_RBRACKET]):return
                 self.subcnt += 1
             if self.current_token.type not in [TT_VOID, TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_CAPTAIN]: 
