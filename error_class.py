@@ -1,4 +1,4 @@
-# ERROR CLASS
+# ERROR MODULE
 
 class Error:
     def __init__(self, pos, error_name, details):
@@ -14,3 +14,7 @@ class Error:
 class LexicalError(Error):
     def __init__(self, pos, details):
         super().__init__(pos, 'Lexical Error', details)
+
+class SemanticError(Error):
+    def __init__(self, pos, details):
+        super().__init__(pos, 'Semantic Error', details)
