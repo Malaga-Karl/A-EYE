@@ -18,8 +18,6 @@ def analyze_code():
         return
     result, errors = lexer.analyze_text(code)
 
-    print(result)
-
     terminal_text.config(state="normal")
     terminal_text.delete("1.0", "end")
     if errors:
