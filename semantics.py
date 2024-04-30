@@ -20,9 +20,12 @@ class SemanticAnalyzer:
         bracketCnt = 100
         contCnt = 2
         func_info = {}
+        isSkip = 0
 
         for token in tokens:
-            if isInFunc:
+            if isSkip != 0:
+                isSkip -= 1
+            elif isInFunc:
                 if contCnt != 0:
                     contCnt -= 1
                 elif isInParam and token.type in [TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL]:
@@ -101,28 +104,31 @@ class SemanticAnalyzer:
                                         if expr_token.type not in expected_types:
                                             self.errors.append(f"Type Mismatch: '{expr_token.type}' found in the expression (Expected: '{expected_types}'). (line {expr_token.line_number})")
                                             break
+                                    isSkip += 1
                 elif token.type == TT_HOME:
                     funcType = self.symbol_table.get(funcName)["type"]
 
                     expected_value_types = {
-                        TT_PINT: [TT_PINT_LIT],
-                        TT_FLEET: [TT_PINT_LIT, TT_FLEET_LIT],
-                        TT_DOFFY: TT_DOFFY_LIT,
-                        TT_BULL: [TT_REAL, TT_USOPP]
+                        TT_PINT: [TT_PINT_LIT, TT_PINT],
+                        TT_FLEET: [TT_PINT_LIT, TT_FLEET_LIT, TT_PINT, TT_FLEET],
+                        TT_DOFFY: [TT_DOFFY_LIT, TT_DOFFY],
+                        TT_BULL: [TT_REAL, TT_USOPP, TT_BULL]
                     }
 
                     expected_types = expected_value_types.get(funcType)
 
                     if tokens[tokens.index(token) + 3].type in [TT_RPAREN]:
-                        if variable_name in param_table:
+                        if tokens[tokens.index(token) + 2].type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP]:
+                            assigned_value_type = tokens[tokens.index(token) + 2].type
+                        elif tokens[tokens.index(token) + 2].value in param_table:
                             assigned_value_type = param_table[tokens[tokens.index(token) + 2].value]["type"]
-                        elif variable_name in func_symbol:
+                        elif tokens[tokens.index(token) + 2].value in func_symbol:
                             assigned_value_type = func_symbol[tokens[tokens.index(token) + 2].value]["type"]
-                        else:
+                        elif tokens[tokens.index(token) + 2].value in self.symbol_table:
                             assigned_value_type = self.symbol_table.get(tokens[tokens.index(token) + 2].value)["type"]
-                        print(assigned_value_type)
-                        print(expected_types)
-                        print(assigned_value_type not in expected_types)
+                        else:
+                            self.errors.append(f"Undeclared Variable Usage: Variable '{tokens[tokens.index(token) + 2].value}' is being used before it is declared. (line {token.line_number})")
+
                         if assigned_value_type not in expected_types:
                             self.errors.append(f"Return Type Mismatch: Function '{funcName}' has a return type of '{declared_type}' but is assigned '{assigned_value_type}'. (line {token.line_number})")
                     else:
@@ -139,9 +145,21 @@ class SemanticAnalyzer:
                                 continue
                             elif expr_token.type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP]:
                                 if expr_token.type not in expected_types:
-                                    self.errors.append(f"Return Type Mismatch: Function '{funcName}' has a return type of '{declared_type}' but is assigned '{assigned_value_type}'. (line {token.line_number})")
+                                    self.errors.append(f"Return Type Mismatch: Function '{funcName}' has a return type of '{declared_type}' but is assigned '{expr_token.type}'. (line {token.line_number})")
                                     break
+                            elif expr_token.type == TT_IDTFR:
+                                if expr_token.value in param_table:
+                                    assigned_value_type = param_table[expr_token.value]["type"]
+                                elif expr_token.value in func_symbol:
+                                    assigned_value_type = func_symbol[expr_token.value]["type"]
+                                elif expr_token.value in self.symbol_table:
+                                    assigned_value_type = self.symbol_table.get(expr_token.value)["type"]
+                                else:
+                                    self.errors.append(f"Undeclared Variable Usage: Variable '{expr_token.value}' is being used before it is declared. (line {token.line_number})")
 
+                                if assigned_value_type not in expected_types:
+                                    self.errors.append(f"Return Type Mismatch: Function '{funcName}' has a return type of '{declared_type}' but is assigned '{assigned_value_type}'. (line {token.line_number})")
+                            isSkip += 1
             elif token.type in [TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL]:
                 if tokens[tokens.index(token) + 2].type == TT_ASSIGN:
                     variable_name = tokens[tokens.index(token) + 1].value
@@ -198,6 +216,7 @@ class SemanticAnalyzer:
                                     if expr_token.type not in expected_types:
                                         self.errors.append(f"Type Mismatch: '{expr_token.type}' found in the expression (Expected: '{expected_types}'). (line {expr_token.line_number})")
                                         break
+                            isSkip += 1
                 elif tokens[tokens.index(token) + 1].type == TT_LPAREN:
                     variable_name = token.value
                     declared_symbol = self.symbol_table.get(variable_name)
@@ -212,7 +231,7 @@ class SemanticAnalyzer:
                                 parCnt -= 1
                                 if parCnt == 0:
                                     if checkedToken < paramCnt:
-                                        self.errors.append(f"kulang param: Captain is already declared. (line {token.line_number})") # kulang
+                                        self.errors.append(f"Insufficient Parameter: {paramCnt} expected but only {checkedToken} found for {variable_name}. Please ensure all required parameters are included. (line {token.line_number})")
                                     break
                             elif param_token.type == TT_LPAREN:
                                 parCnt += 1
@@ -221,12 +240,12 @@ class SemanticAnalyzer:
                                     if param_tokens[i + 1].type in [TT_COMMA, TT_RPAREN]:
                                         currentParam = self.symbol_table.get(param_tokens[i].value)
                                         if currentParam["type"] != checkedFunction[f"param{i+1}_type"]:
-                                            self.errors.append(f"mali yung param type: Captain is already declared. (line {token.line_number})") # kulang
+                                            self.errors.append(f"Invalid Parameter: Invalid parameter {param_tokens[i].value} provided for {variable_name}. Please check the parameter and try again. (line {token.line_number})")
                                         checkedToken += 1
                                     # elif hindi single value kulang 
                                 else:
-                                    self.errors.append(f"sobra param: Captain is already declared. (line {token.line_number})") # kulang
-
+                                    self.errors.append(f"Excess Parameter: {paramCnt} expected but {checkedToken} found for {variable_name}. Please remove any unnecessary parameters. (line {token.line_number})")
+                            isSkip += 1
                             
 
         # print(self.symbol_table)
