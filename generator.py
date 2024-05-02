@@ -29,13 +29,19 @@ replacements = {
     'home': 'return'
 }
 
-def replacenth(string, sub, wanted, n):
-    where = [m.start() for m in re.finditer(sub, string)][n-1]
-    before = string[:where]
-    after = string[where:]
-    after = after.replace(sub, wanted, 1)
-    newString = before + after
-    return(newString)
+def nth_repl(s, sub, repl, n):
+    find = s.find(sub)
+    # If find is not -1 we have found at least one match for the substring
+    i = find != -1
+    # loop util we find the nth or we find no match
+    while find != -1 and i != n:
+        # find + 1 means we start searching from after the last match
+        find = s.find(sub, find + 1)
+        i += 1
+    # If i is equal to n we found nth match so replace
+    if i == n:
+        return s[:find] + repl + s[find+len(sub):]
+    return s
 
 def generate(code):
     #split line by line
@@ -46,6 +52,9 @@ def generate(code):
 
     # iterate through lines
     for i in range(firstLine, lastLine):
+        if code[i] == "":
+            continue
+
         firstWord = code[i].split()[0]
 
         for key in replacements.keys():
@@ -59,7 +68,8 @@ def generate(code):
                 length = len(code[i].split())
                 afterType =  " ".join(code[i].split()[1:])
                 code[i]=code[i].replace(firstWord, afterType)
-                code[i]=replacenth(code[i], afterType, "", 2)
+                # code[i]=replacenth(code[i], afterType, "", 2)
+                code[i]=nth_repl(code[i], afterType, "", 2)
 
 
                 

@@ -1,8 +1,6 @@
 def main():
-	a = 5 
-	if(a<2):
-		print("Nice")
-else:
-		print("not nice")
+	a = 4 b = 5 a = 4
+ b = 5 5 a = 4
+ b = 5
 if __name__ == '__main__': 
    main()
