@@ -7,6 +7,8 @@ import imageio
 from PIL import Image, ImageTk
 from moviepy.editor import VideoFileClip 
 from PIL import ImageSequence
+import generator
+#import generatedCode
 
 table = None
 
@@ -49,6 +51,8 @@ def analyze_syntax():
     result, errors = lexer.analyze_text(code)
     if not errors:
         syntax_result = syntax.analyze_syntax(result)
+        generator.generate(code)
+   
 
     terminal_text.config(state="normal")
     terminal_text.delete("1.0", "end")
@@ -57,7 +61,9 @@ def analyze_syntax():
             terminal_text.insert(tk.END, error.as_string() + "\n")
         terminal_text.config(state="disabled")
     else:
+        # output = open("A-EYE/output.txt", "r")
         terminal_text.insert(tk.END, syntax_result + "\n")
+        # terminal_text.insert(tk.END, output.read() + "\n")
         terminal_text.config(state="disabled")
         if syntax_result == "Syntax analysis successful":
             terminal_text.tag_configure("success", foreground="green")

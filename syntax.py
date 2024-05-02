@@ -6,6 +6,7 @@ from constants import *
 from error_class import *
 from position_class import *
 
+
 class SyntaxAnalyzer:
     def __init__(self, tokens):
         self.temp_tokens = []
