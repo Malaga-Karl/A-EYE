@@ -25,8 +25,18 @@ replacements = {
     'nay' : 'not',
     '{' : ':\n',
     '}' : '',
-    ',' : '\n'
+    ',' : '\n',
+    'home': 'return'
 }
+
+def replacenth(string, sub, wanted, n):
+    where = [m.start() for m in re.finditer(sub, string)][n-1]
+    before = string[:where]
+    after = string[where:]
+    after = after.replace(sub, wanted, 1)
+    newString = before + after
+    return(newString)
+
 def generate(code):
     #split line by line
     code = code.split("\n")
@@ -36,34 +46,29 @@ def generate(code):
 
     # iterate through lines
     for i in range(firstLine, lastLine):
-        #code[i]= code[i].replace(";", "\n")
-        # if "captain" in code[i]:
-        #     pyfile.write("def main():")
-        #     pyfile.write("\n")
-        #     continue
-        # if "fire" in code[i]:
-        #     pyfile.write(code[i].replace('fire', 'print'))
-        #     continue
+        firstWord = code[i].split()[0]
 
         for key in replacements.keys():
             code[i] = code[i].replace(key, replacements[key])
-        for dtype in ['pint', 'fleet', 'bull', 'doffy']:
-            if dtype in code[i]:
-                split = code[i].split()
-                if split[split.index(dtype) + 1].endswith("()"):
-                    code[i]=code[i].replace(dtype, 'def')
-                else:
-                    code[i]=code[i].replace(dtype, '')
+
+        
+        if firstWord in ['pint', 'fleet', 'doffy', 'bull']:
+            if "()" in code[i].split()[1]: # function statement    
+                code[i]=code[i].replace(firstWord, 'def')
+            else: # variable statement
+                length = len(code[i].split())
+                afterType =  " ".join(code[i].split()[1:])
+                code[i]=code[i].replace(firstWord, afterType)
+                code[i]=replacenth(code[i], afterType, "", 2)
+
+
+                
+                    
 
         pyfile.write(code[i])
-
-    # for i in range(firstLine, lastLine):
-    #     for key in replacements.keys():
-    #         code[i] = code[i].replace(key, replacements[key])
-    #     pyfile.write(code[i])
 
     pyfile.write("if __name__ == '__main__': \n   main()") 
     pyfile.close()
     
-    # os.system(f"python -u \"{os.getcwd()}\A-EYE\generatedCode.py\" > \"{os.getcwd()}\A-EYE\output.txt\"")
+    os.system(f"python -u \"{os.getcwd()}\A-EYE\generatedCode.py\" > \"{os.getcwd()}\A-EYE\output.txt\"")
     return
