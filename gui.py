@@ -65,8 +65,8 @@ def analyze_syntax():
         terminal_text.insert(tk.END, syntax_result + "\n")
         terminal_text.insert(tk.END, output.read() + "\n")
         terminal_text.config(state="disabled")
-        if syntax_result == "Syntax analysis successful":
-            terminal_text.tag_configure("success", foreground="green")
+        if syntax_result == "Output:":
+            terminal_text.tag_configure("success", foreground="light green")
             terminal_text.tag_add("success", "1.0", "end")
 
     table_headers = ["Line #", "Lexeme", "Token"]
@@ -97,8 +97,8 @@ def analyze_semantics():
         terminal_text.config(state="disabled")
     else:
         terminal_text.insert(tk.END, syntax_result + "\n")
-        if syntax_result == "Syntax analysis successful":
-            terminal_text.tag_configure("success", foreground="green")
+        if syntax_result == "Output:":
+            terminal_text.tag_configure("success", foreground="light green")
             terminal_text.tag_add("success", "1.0", "end")
         terminal_text.insert(tk.END, semantics_result + "\n")
         terminal_text.config(state="disabled")
