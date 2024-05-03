@@ -61,7 +61,7 @@ def analyze_syntax():
             terminal_text.insert(tk.END, error.as_string() + "\n")
         terminal_text.config(state="disabled")
     else:
-        output = open("A-EYE/output.txt", "r")
+        output = open("output.txt", "r")
         terminal_text.insert(tk.END, syntax_result + "\n")
         terminal_text.insert(tk.END, output.read() + "\n")
         terminal_text.config(state="disabled")

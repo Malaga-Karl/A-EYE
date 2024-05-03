@@ -41,7 +41,7 @@ def nth_repl(s, sub, repl, n):
 def generate(code):
     #split line by line
     code = code.split("\n")
-    pyfile = open("A-EYE/generatedCode.py", "w")
+    pyfile = open("generatedCode.py", "w")
     firstLine = code.index("onboard") + 1
     lastLine = code.index("offboard")
 

@@ -1,6 +1,4 @@
-def print_happy():
-	print("happy birthday")
-	def main():
-	print_happy()
+def main():
+	print("hello")
 if __name__ == '__main__': 
    main()
