@@ -50,10 +50,8 @@ def generate(code):
     firstLine = code.index("onboard") + 1
     lastLine = code.index("offboard")
 
-    # Keep track of temporary variable counter
+    # Temporary variable counter: will start the count in t1 
     temp_var_counter = 1
-
-    # Dictionary to hold temporary variables
     temp_vars = {}
 
     # Iterate through lines
@@ -76,30 +74,33 @@ def generate(code):
                 # code[i]=replacenth(code[i], afterType, "", 2)
                 code[i] = nth_repl(code[i], afterType, "", 2)
 
-        # Apply TAC
-        # Example: 'fire a + b * c' will be converted to:
-        # t1 = b * c
-        # t2 = a + t1
-        # fire t2
-        if 'fire' in code[i]:
-            expression = code[i].split('fire ')[1]
-            terms = expression.split()
-            result_var = terms[0]
-            new_expression = ''
+        # Application of TAC in Expressions
+        if 'fire' in code[i]: #Detection of fire
+            expression = code[i].split('fire ')[1] #If there is Fire, extraction of expression will happen
+            terms = expression.split() #Tokenization
+            result_var = terms[0] #First Term in expression represents the variable
+            new_expression = '' #Starting Point of Constant Replacement
             for term in terms[1:]:
                 if term in replacements:
                     new_expression += replacements[term] + ' '
                 else:
                     new_expression += term + ' '
-            temp_var = f't{temp_var_counter}'
-            temp_vars[temp_var] = new_expression
-            code[i] = f'{temp_var} = {new_expression}\n'
+            temp_var = f't{temp_var_counter}' #Hold intermiate result
+            temp_vars[temp_var] = new_expression #Replacemnrs
+            code[i] = f'{temp_var} = {new_expression}\n' #Assignment of value
             code.insert(i + 1, f'fire {result_var} {temp_var}\n')
-            temp_var_counter += 1
+            temp_var_counter += 1 #Increment
+            
+        # Example: 
+        # fire (a + b * c / a) will be converted to:
+        # t1 = c / a
+        # t2 = b * t1
+        # t3 = a + t2
+        # fire t3
 
         pyfile.write(code[i])
 
-    # Write out the temporary variables used
+    # Out the Temporary Used Variables 
     for var, expression in temp_vars.items():
         pyfile.write(f'{var} = {expression}\n')
 

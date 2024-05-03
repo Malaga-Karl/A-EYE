@@ -1106,7 +1106,7 @@ def analyze_syntax(tokens):
     if errors:
         return errors[0]
     else:
-        return "Syntax analysis successful"
+        return "Output:"
 
 # def analyze_syntax(tokens):
 #     syntax_analyzer = SyntaxAnalyzer(tokens)
