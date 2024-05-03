@@ -66,7 +66,7 @@ def analyze_syntax():
         terminal_text.insert(tk.END, output.read() + "\n")
         terminal_text.config(state="disabled")
         if syntax_result == "Output:":
-            terminal_text.tag_configure("success", foreground="green")
+            terminal_text.tag_configure("success", foreground="light green")
             terminal_text.tag_add("success", "1.0", "end")
 
     table_headers = ["Line #", "Lexeme", "Token"]
@@ -98,7 +98,7 @@ def analyze_semantics():
     else:
         terminal_text.insert(tk.END, syntax_result + "\n")
         if syntax_result == "Output:":
-            terminal_text.tag_configure("success", foreground="green")
+            terminal_text.tag_configure("success", foreground="light green")
             terminal_text.tag_add("success", "1.0", "end")
         terminal_text.insert(tk.END, semantics_result + "\n")
         terminal_text.config(state="disabled")
@@ -405,7 +405,7 @@ style.configure("Terminal.TFrame", background="#0F0F0F", borderwidth=6, relief="
 frame_terminal = ttk.Frame(frame_content, style="Terminal.TFrame", width=1000, height=330) 
 frame_terminal.place(x=85, y=534)
 
-lbl_terminal = tk.Label(frame_terminal, text="TERMINAL", font=("Pirate Scroll", 14), bg="#0F0F0F", fg="#dfd1be") 
+lbl_terminal = tk.Label(frame_terminal, text="TERMINAL :", font=("Pirate Scroll", 14), bg="#0F0F0F", fg="#dfd1be") 
 lbl_terminal.place(x=10, y=5)
 
 # Create the terminal text widget with the calculated width
