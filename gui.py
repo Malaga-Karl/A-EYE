@@ -155,7 +155,7 @@ def load_gif_frames(gif_path):
 
 # #MoviePy Video
 def play_intro():
-    video_path = "A-Eye Intro.mp4"  
+    video_path = "syntax\A-EYE\A-Eye Intro.mp4"  
     clip = VideoFileClip(video_path)
     intro_window = tk.Toplevel(root)
     intro_window.attributes("-fullscreen", True)
@@ -180,10 +180,10 @@ screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 root.attributes("-fullscreen", True)  # Set full screen
 root.configure(bg="#373737")
-icon_image = tk.PhotoImage(file="A-Eye Logo.png")
+icon_image = tk.PhotoImage(file="syntax\A-EYE\A-Eye Logo.png")
 root.iconphoto(True, icon_image)
 
-gif_path = "background.gif"
+gif_path = "syntax/A-EYE/background.gif"
 
 def load_gif_frames(gif_path):
     reader = imageio.get_reader(gif_path, format='gif')
@@ -215,7 +215,7 @@ frame_navbar = tk.Frame(root, bg="#0F0F0F")
 frame_navbar.place(x=0, y=0, width=screen_width, height=50)
 
 #A-Eye Logo
-logo_image = tk.PhotoImage(file="A-Eye Logo.png") 
+logo_image = tk.PhotoImage(file="syntax\A-EYE\A-Eye Logo.png")
 logo_image = logo_image.subsample(7, 7)  
 logo_label = tk.Label(frame_navbar, image=logo_image, bg="#0F0F0F")
 logo_label.pack(side="left", padx=10)  
