@@ -81,5 +81,5 @@ def generate(code):
     pyfile.write("if __name__ == '__main__': \n   main()") 
     pyfile.close()
     
-    os.system(f"python -u \"{os.getcwd()}\A-EYE\generatedCode.py\" > \"{os.getcwd()}\A-EYE\output.txt\"")
+    os.system(f"python -u \"{os.getcwd()}\generatedCode.py\" > \"{os.getcwd()}\output.txt\"")
     return
