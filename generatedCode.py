@@ -1,6 +1,6 @@
-def main():
-	a = 4 b = 5 a = 4
- b = 5 5 a = 4
- b = 5
+def print_happy():
+	print("happy birthday")
+	def main():
+	print_happy()
 if __name__ == '__main__': 
    main()

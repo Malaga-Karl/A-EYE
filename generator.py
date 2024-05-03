@@ -2,11 +2,6 @@ import constants
 import re
 import os
 
-class Generator:
-    def __init__(self, code):
-        self.code = code
-
-
 replacements = {
     ';' : '\n',
     'captain': 'def main',
@@ -25,7 +20,7 @@ replacements = {
     'nay' : 'not',
     '{' : ':\n',
     '}' : '',
-    ',' : '\n',
+    # ',' : '\n',
     'home': 'return'
 }
 
@@ -52,30 +47,36 @@ def generate(code):
 
     # iterate through lines
     for i in range(firstLine, lastLine):
+        line = code[i]
         if code[i] == "":
             continue
 
-        firstWord = code[i].split()[0]
+        firstWord = line.split()[0]
 
         for key in replacements.keys():
-            code[i] = code[i].replace(key, replacements[key])
+            line = line.replace(key, replacements[key])
 
         
         if firstWord in ['pint', 'fleet', 'doffy', 'bull']:
-            if "()" in code[i].split()[1]: # function statement    
-                code[i]=code[i].replace(firstWord, 'def')
-            else: # variable statement
-                length = len(code[i].split())
-                afterType =  " ".join(code[i].split()[1:])
-                code[i]=code[i].replace(firstWord, afterType)
-                # code[i]=replacenth(code[i], afterType, "", 2)
-                code[i]=nth_repl(code[i], afterType, "", 2)
+            if "()" in line.split()[1]: # function statement    
+                line=line.replace(firstWord, 'def')
 
+            else: # variable statement
+                length = len(line.split())
+                afterType =  " ".join(line.split()[1:])
+                line=line.replace(firstWord, afterType)
+                line=nth_repl(line, afterType, "", 2)
+        
+            # if ',' in line:
+                # for i in range(line.count(',')):
+                #     pyfile.write(line)
+
+                
 
                 
                     
 
-        pyfile.write(code[i])
+        pyfile.write(line)
 
     pyfile.write("if __name__ == '__main__': \n   main()") 
     pyfile.close()
