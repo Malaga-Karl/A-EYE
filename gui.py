@@ -221,7 +221,7 @@ def on_delete(event):
 #     root.after(10, update_frame, (frame_index + 1) % len(frames))  
 
 #Main Window
-root = tk.Tk()
+root = tk.Tk()  
 root.title("A-Eye Compiler")
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()

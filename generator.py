@@ -2,6 +2,11 @@ import constants
 import re
 import os
 
+class Generator:
+    def __init__(self, code):
+        self.code = code
+
+
 replacements = {
     ';' : '\n',
     'captain': 'def main',
@@ -20,7 +25,7 @@ replacements = {
     'nay' : 'not',
     '{' : ':\n',
     '}' : '',
-    # ',' : '\n',
+    ',' : '\n',
     'home': 'return'
 }
 
@@ -42,7 +47,6 @@ def generate(code):
     # Split code by lines
     code = code.split("\n")
     pyfile = open("generatedCode.py", "w")
-    pyfile = open("generatedCode.py", "w")
     firstLine = code.index("onboard") + 1
     lastLine = code.index("offboard")
 
@@ -52,36 +56,16 @@ def generate(code):
 
     # Iterate through lines
     for i in range(firstLine, lastLine):
-        line = code[i]
         if code[i] == "":
             continue
-
-        firstWord = line.split()[0]
+        
+        if len(code[i].split()) > 1: firstWord = code[i].split()[0]
+        else: firstWord = ""
 
         for key in replacements.keys():
-            line = line.replace(key, replacements[key])
+            code[i] = code[i].replace(key, replacements[key])
 
-        
         if firstWord in ['pint', 'fleet', 'doffy', 'bull']:
-            if "()" in line.split()[1]: # function statement    
-                line=line.replace(firstWord, 'def')
-
-            else: # variable statement
-                length = len(line.split())
-                afterType =  " ".join(line.split()[1:])
-                line=line.replace(firstWord, afterType)
-                line=nth_repl(line, afterType, "", 2)
-        
-            # if ',' in line:
-                # for i in range(line.count(',')):
-                #     pyfile.write(line)
-
-                
-
-                
-                    
-
-        pyfile.write(line)
             if "()" in code[i].split()[1]:  # Function statement    
                 code[i] = code[i].replace(firstWord, 'def')
             else:  # Variable statement
@@ -125,5 +109,3 @@ def generate(code):
     pyfile.close()
 
     os.system(f"python -u \"{os.getcwd()}\generatedCode.py\" > \"{os.getcwd()}\output.txt\"")
-
-
