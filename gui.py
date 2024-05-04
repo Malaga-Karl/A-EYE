@@ -4,6 +4,7 @@ import lexer
 import syntax
 import semantics
 import imageio
+import re
 from PIL import Image, ImageTk
 from moviepy.editor import VideoFileClip 
 from PIL import ImageSequence
@@ -162,21 +163,6 @@ def clear_text_and_outputs():
     line_numbers.delete("1.0", "end")
     line_numbers.config(state="disabled")
 
-def on_entry_click(event):
-    current_text = text_widget.get("1.0", "end-1c").strip()
-    placeholder_text = 'Start the code here ...................'
-
-    if current_text == placeholder_text:
-        text_widget.delete("1.0", "end-1c")
-    text_widget.config(fg="white", font=("Courier New", 12, "normal"))
-
-def on_focus_out(event):
-    current_text = text_widget.get("1.0", "end-1c").strip()
-    placeholder_text = 'Start the code here ...................'
-
-    if not current_text:
-        text_widget.insert("1.0", placeholder_text)
-        text_widget.config(fg="#8a8a8a", font=("Courier New", 12, "italic"))
         
 def on_delete(event):
     current_text = text_widget.get("1.0", "end-1c")
@@ -308,7 +294,6 @@ btn_close.bind("<Leave>", on_leave)
 
 #Delete Button
 def clear_text_and_outputs(event=None): 
-    text_widget.bind("<FocusIn>", on_entry_click)
     text_widget.delete("1.0", "end")
     text_widget.config(fg="white", font=("Courier New", 12, "normal"))
     table.delete(*table.get_children())
@@ -318,9 +303,8 @@ def clear_text_and_outputs(event=None):
     terminal_text.config(state="disabled")
 
     update_line_numbers()
-    text_widget.unbind("<FocusIn>", on_entry_click)
     
-btn_delete = tk.Button( frame_navbar, text="🧹", font=("Pirate Scroll", 15), bg="#0F0F0F", fg="white", relief="flat", command=lambda: (clear_text_and_outputs(), on_focus_out(None)), width=10, height=50, compound=tk.CENTER, padx=2)
+btn_delete = tk.Button( frame_navbar, text="🧹", font=("Pirate Scroll", 15), bg="#0F0F0F", fg="white", relief="flat", command=lambda: (clear_text_and_outputs()), width=10, height=50, compound=tk.CENTER, padx=2)
 btn_delete.pack(side="right")
 
 #Text Editor Frame
@@ -331,12 +315,11 @@ editor_frame.place(x=85, y=50, width=1000, height=484)
 line_number_frame = tk.Frame(editor_frame)
 line_number_frame.pack(side="left", fill="y")
 
-text_widget = tk.Text(editor_frame, wrap="none", height=screen_height-50, bg="#121212", fg="white", bd=0, padx=10, font=("Courier New", 12))
+text_widget = tk.Text(editor_frame, wrap="none", height=screen_height-50, bg="#121212", fg="white", bd=0, padx=10, font=("Courier New", 12), undo=True, autoseparators=True)
 text_widget.pack(side="left", fill="both", expand=True)
 text_widget.bind("<Key>", update_line_numbers)
-text_widget.insert("1.0", 'Start the code here ...................')
-text_widget.config(fg="#8a8a8a", font=("Courier New", 12, "italic"))
-text_widget.bind("<FocusIn>", on_entry_click)
+text_widget.config(fg="white", font=("Courier New", 12))
+text_widget.focus_set()
 
 text_widget.config(yscrollcommand=lambda *args: (text_widget.yview(*args), update_line_numbers_on_scroll(*args)))
 
@@ -418,5 +401,88 @@ terminal_scrollbar.place(x=985, y=3, height=324)
 terminal_text['yscrollcommand'] = terminal_scrollbar.set
 
 style.configure("Vertical.TScrollbar", troughcolor="#808080", gripcount=0, relief="flat")
+
+
+#Other FunctionalitiesL:
+
+#Undo and Redo:
+undo_stack = []
+redo_stack = []
+
+def undo_action(event=None):
+    if undo_stack:
+        character = undo_stack.pop()
+        redo_stack.append(character)
+        text_widget.edit_undo()
+
+def redo_action(event=None):
+    if redo_stack:
+        character = redo_stack.pop()
+        undo_stack.append(character)
+        text_widget.edit_redo()
+
+def track_changes(event):
+    if event.char and event.keysym != "BackSpace" and event.keysym != "Delete":
+        undo_stack.append(event.char)
+    elif event.keysym == "":
+        char_index = text_widget.index(tk.INSERT)
+        if char_index != "1.0":
+            character = text_widget.get(char_index + "-1c")
+            undo_stack.append(character)
+            
+text_widget.bind("<Key>", track_changes)
+
+btn_undo = tk.Button(frame_navbar, text="↩️", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="white", relief="flat", command=undo_action, width=10, height=30, compound=tk.CENTER, padx=5)
+btn_undo.pack(side="right")
+btn_redo = tk.Button(frame_navbar, text="↪️", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="white", relief="flat", command=redo_action, width=10, height=30, compound=tk.CENTER, padx=5)
+btn_redo.pack(side="right")
+
+#Colored Reserve Words
+def update_text_color(event=None):
+    # List of words to be colored light red
+    reserved_words = ["onboard", "offboard", "captain", "pint", "fleet", "bull", "doffy", "loyal", "fire", "load", "len", "theo", "alt", "althea", "helm", "chest", "dagger", "four", "whale", "real", "usopp", "and", "oro", "nay", "leak", "sail", "anchor", "pass", "void", "home"]
+
+    # Clear previous tags
+    text_widget.tag_remove("reserved_words", "1.0", "end")
+    text_widget.tag_remove("brackets", "1.0", "end")
+    text_widget.tag_remove("quotes", "1.0", "end")
+
+    # Tag reserved words
+    for keyword in reserved_words:
+        pattern = r'\b' + re.escape(keyword) + r'\b'
+        for match in re.finditer(pattern, text_widget.get("1.0", "end"), re.IGNORECASE):
+            start_index = "1.0" + "+%dc" % match.start()
+            end_index = "1.0" + "+%dc" % match.end()
+            text_widget.tag_add("reserved_words", start_index, end_index)
+
+    # Tag brackets
+    for bracket in ['(', ')', '{', '}', '[', ']']:
+        pattern = re.escape(bracket)
+        for match in re.finditer(pattern, text_widget.get("1.0", "end")):
+            start_index = "1.0" + "+%dc" % match.start()
+            end_index = "1.0" + "+%dc" % match.end()
+            text_widget.tag_add("brackets", start_index, end_index)
+
+    # Tag quotes
+    quote_pairs = [('"', '"'), ("'", "'")]
+    for opening, closing in quote_pairs:
+        start_index = "1.0"
+        while True:
+            start_index = text_widget.search(re.escape(opening), start_index, stopindex="end")
+            if not start_index:
+                break
+            end_index = text_widget.search(re.escape(closing), f"{start_index}+1c", stopindex="end")
+            if not end_index:
+                break
+            end_index = f"{end_index}+1c"
+            text_widget.tag_add("quotes", start_index, end_index)
+            start_index = end_index
+
+    # Apply tag configurations
+    text_widget.tag_config("reserved_words", foreground="#5BBCFF")
+    text_widget.tag_config("brackets", foreground="#FDDE55")
+    text_widget.tag_config("quotes", foreground="#68D2E8")
+
+text_widget.bind("<KeyRelease>", update_text_color)
 
 root.mainloop()
