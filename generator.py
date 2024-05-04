@@ -58,8 +58,9 @@ def generate(code):
     for i in range(firstLine, lastLine):
         if code[i] == "":
             continue
-
-        firstWord = code[i].split()[0]
+        
+        if len(code[i].split()) > 1: firstWord = code[i].split()[0]
+        else: firstWord = ""
 
         for key in replacements.keys():
             code[i] = code[i].replace(key, replacements[key])
@@ -108,5 +109,3 @@ def generate(code):
     pyfile.close()
 
     os.system(f"python -u \"{os.getcwd()}\generatedCode.py\" > \"{os.getcwd()}\output.txt\"")
-
-

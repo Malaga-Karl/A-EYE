@@ -32,8 +32,6 @@ def analyze_code():
         terminal_text.tag_configure("success", foreground="green")
         terminal_text.tag_add("success", "1.0", "end")
 
-    
-
     table_headers = ["Line #", "Lexeme", "Token"]
     table.delete(*table.get_children()) 
     
@@ -445,6 +443,7 @@ def update_text_color(event=None):
     text_widget.tag_remove("brackets", "1.0", "end")
     text_widget.tag_remove("quotes", "1.0", "end")
 
+    #For Reserved Words
     for keyword in reserved_words:
         pattern = r'\b' + re.escape(keyword) + r'\b'
         for match in re.finditer(pattern, text_widget.get("1.0", "end"), re.IGNORECASE):
@@ -452,13 +451,15 @@ def update_text_color(event=None):
             end_index = "1.0" + "+%dc" % match.end()
             text_widget.tag_add("reserved_words", start_index, end_index)
 
+    #For Brackets
     for bracket in ['(', ')', '{', '}', '[', ']']:
         pattern = re.escape(bracket)
         for match in re.finditer(pattern, text_widget.get("1.0", "end")):
             start_index = "1.0" + "+%dc" % match.start()
             end_index = "1.0" + "+%dc" % match.end()
             text_widget.tag_add("brackets", start_index, end_index)
-
+            
+    #For Doffy/String
     quote_pairs = [('"', '"'), ("'", "'")]
     for opening, closing in quote_pairs:
         start_index = "1.0"
@@ -480,4 +481,32 @@ def update_text_color(event=None):
     update_line_numbers()
 
 text_widget.bind("<KeyRelease>", update_text_color)
+
+#Indention
+def insert_spaces(event):
+    text_widget.insert(tk.INSERT, "    ")  
+    return 'break'  
+
+text_widget.bind("<Tab>", insert_spaces)
+text_widget.indent_level = 0
+
+def indent_next_line(event):
+    current_line_index = int(text_widget.index(tk.INSERT).split('.')[0])
+    current_line_content = text_widget.get(f"{current_line_index}.0", f"{current_line_index}.end")
+    indentation = "    "
+    
+    leading_spaces = len(current_line_content) - len(current_line_content.lstrip())
+
+    if "{" in current_line_content:
+        text_widget.insert(tk.INSERT, "\n" + indentation)
+    elif "}" in current_line_content:
+        text_widget.indent_level = max(getattr(text_widget, 'indent_level', 0) - 1, 0)
+        text_widget.insert(tk.INSERT, "\n" + " " * (text_widget.indent_level * len(indentation)))
+        text_widget.see(tk.INSERT)
+    else:
+        text_widget.insert(tk.INSERT, "\n" + " " * leading_spaces)
+    return 'break'
+
+text_widget.bind("<Return>", indent_next_line)
+
 root.mainloop()
