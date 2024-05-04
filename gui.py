@@ -130,8 +130,8 @@ def update_line_numbers(*args):
     line_numbers.insert("1.0", lines_text)
     line_numbers.config(state="disabled")
 
-    update_line_visibility()
-    
+    update_line_visibility(*args)
+
 def update_line_visibility(*args):
     text_widget.yview(*args)
     line_numbers.yview(*args)
@@ -321,7 +321,7 @@ text_widget.bind("<Key>", update_line_numbers)
 text_widget.config(fg="white", font=("Courier New", 12))
 text_widget.focus_set()
 
-text_widget.config(yscrollcommand=lambda *args: (text_widget.yview(*args), update_line_numbers_on_scroll(*args)))
+text_widget.config(yscrollcommand=lambda *args: (text_widget.yview(*args), update_line_numbers(*args)))
 
 def update_line_numbers_on_scroll(event=None):
     first_visible_line = text_widget.index("@0,0").split(".")[0]
@@ -439,15 +439,12 @@ btn_redo.pack(side="right")
 
 #Colored Reserve Words
 def update_text_color(event=None):
-    # List of words to be colored light red
     reserved_words = ["onboard", "offboard", "captain", "pint", "fleet", "bull", "doffy", "loyal", "fire", "load", "len", "theo", "alt", "althea", "helm", "chest", "dagger", "four", "whale", "real", "usopp", "and", "oro", "nay", "leak", "sail", "anchor", "pass", "void", "home"]
 
-    # Clear previous tags
     text_widget.tag_remove("reserved_words", "1.0", "end")
     text_widget.tag_remove("brackets", "1.0", "end")
     text_widget.tag_remove("quotes", "1.0", "end")
 
-    # Tag reserved words
     for keyword in reserved_words:
         pattern = r'\b' + re.escape(keyword) + r'\b'
         for match in re.finditer(pattern, text_widget.get("1.0", "end"), re.IGNORECASE):
@@ -455,7 +452,6 @@ def update_text_color(event=None):
             end_index = "1.0" + "+%dc" % match.end()
             text_widget.tag_add("reserved_words", start_index, end_index)
 
-    # Tag brackets
     for bracket in ['(', ')', '{', '}', '[', ']']:
         pattern = re.escape(bracket)
         for match in re.finditer(pattern, text_widget.get("1.0", "end")):
@@ -463,7 +459,6 @@ def update_text_color(event=None):
             end_index = "1.0" + "+%dc" % match.end()
             text_widget.tag_add("brackets", start_index, end_index)
 
-    # Tag quotes
     quote_pairs = [('"', '"'), ("'", "'")]
     for opening, closing in quote_pairs:
         start_index = "1.0"
@@ -478,11 +473,11 @@ def update_text_color(event=None):
             text_widget.tag_add("quotes", start_index, end_index)
             start_index = end_index
 
-    # Apply tag configurations
     text_widget.tag_config("reserved_words", foreground="#5BBCFF")
     text_widget.tag_config("brackets", foreground="#FDDE55")
     text_widget.tag_config("quotes", foreground="#68D2E8")
 
-text_widget.bind("<KeyRelease>", update_text_color)
+    update_line_numbers()
 
+text_widget.bind("<KeyRelease>", update_text_color)
 root.mainloop()
