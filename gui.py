@@ -458,14 +458,16 @@ def update_text_color(event=None):
     text_widget.tag_remove("brackets", "1.0", "end")
     text_widget.tag_remove("quotes", "1.0", "end")
 
-    #For Reserved Words
+    # For Reserved Words
     for keyword in reserved_words:
         pattern = r'\b' + re.escape(keyword) + r'\b'
         for match in re.finditer(pattern, text_widget.get("1.0", "end"), re.IGNORECASE):
             start_index = "1.0" + "+%dc" % match.start()
             end_index = "1.0" + "+%dc" % match.end()
-            text_widget.tag_add("reserved_words", start_index, end_index)
-
+            # Check if the matched word is lowercase
+            if text_widget.get(start_index, end_index).islower():
+                text_widget.tag_add("reserved_words", start_index, end_index)
+                
     #For Brackets
     for bracket in ['(', ')', '{', '}', '[', ']']:
         pattern = re.escape(bracket)
