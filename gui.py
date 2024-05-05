@@ -4,6 +4,8 @@ import lexer
 import syntax
 import semantics
 import imageio
+import threading
+import time
 import re
 from PIL import Image, ImageTk
 from moviepy.editor import VideoFileClip 
@@ -185,18 +187,33 @@ def on_delete(event):
 #     return frames
 
 # # #MoviePy Video
+# def play_video():
+#     global clip, intro_window, root
+    
+#     def close_intro():
+#         intro_window.destroy()
+#         clip.close()
+    
+#     clip.preview(fps=24)
+    
+#     time.sleep(1)
+#     intro_window.after(0, close_intro)
+    
 # def play_intro():
+#     global clip, intro_window
+    
 #     video_path = "A-Eye Intro.mp4"  
 #     clip = VideoFileClip(video_path)
+    
 #     intro_window = tk.Toplevel(root)
 #     intro_window.attributes("-fullscreen", True)
+    
 #     clip = clip.resize(width=intro_window.winfo_screenwidth(), height=intro_window.winfo_screenheight())
 #     video_label = tk.Label(intro_window)
 #     video_label.pack(expand="true", fill="both")
-#     clip.preview(fps=24)
-
-#     intro_window.destroy()
-#     clip.close() 
+    
+#     playback_thread = threading.Thread(target=play_video)
+#     playback_thread.start()
 
 # def update_frame(frame_index=0):
 #     frame = frames[frame_index]
@@ -222,8 +239,6 @@ root.iconphoto(True, icon_image)
 #     return frames
 
 # frames = load_gif_frames(gif_path)
-
-# play_intro() 
 
 frame_content = tk.Frame(root, bg="#7C1520")
 frame_content.place(x=0, y=0, width=screen_width, height=screen_height)
@@ -508,5 +523,7 @@ def indent_next_line(event):
     return 'break'
 
 text_widget.bind("<Return>", indent_next_line)
+
+# root.after(100, play_intro)
 
 root.mainloop()
