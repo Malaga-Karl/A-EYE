@@ -31,7 +31,7 @@ def analyze_code():
     else:
         terminal_text.insert(tk.END, "Lexical analysis successful" + "\n")
         terminal_text.config(state="disabled")
-        terminal_text.tag_configure("success", foreground="green")
+        terminal_text.tag_configure("success", foreground="light green")
         terminal_text.tag_add("success", "1.0", "end")
 
     table_headers = ["Line #", "Lexeme", "Token"]
@@ -66,7 +66,7 @@ def analyze_syntax():
         terminal_text.insert(tk.END, syntax_result + "\n")
         terminal_text.insert(tk.END, output.read() + "\n")
         terminal_text.config(state="disabled")
-        if syntax_result == "Output:":
+        if syntax_result == "Syntax analysis successful":
             terminal_text.tag_configure("success", foreground="light green")
             terminal_text.tag_add("success", "1.0", "end")
 
@@ -98,13 +98,13 @@ def analyze_semantics():
         terminal_text.config(state="disabled")
     else:
         terminal_text.insert(tk.END, syntax_result + "\n")
-        if syntax_result == "Output:":
+        if syntax_result == "Syntax analysis successful":
             terminal_text.tag_configure("success", foreground="light green")
             terminal_text.tag_add("success", "1.0", "end")
         terminal_text.insert(tk.END, semantics_result + "\n")
         terminal_text.config(state="disabled")
         if semantics_result == "Semantic analysis successful":
-            terminal_text.tag_configure("success", foreground="green")
+            terminal_text.tag_configure("success", foreground="light green")
             terminal_text.tag_add("success", "1.0", "end")
         else:
             terminal_text.tag_configure("error", foreground="red") 
@@ -504,9 +504,6 @@ def insert_spaces(event):
     text_widget.insert(tk.INSERT, "    ")  
     return 'break'  
 
-text_widget.bind("<Tab>", insert_spaces)
-text_widget.indent_level = 0
-
 def indent_next_line(event):
     current_line_index = int(text_widget.index(tk.INSERT).split('.')[0])
     current_line_content = text_widget.get(f"{current_line_index}.0", f"{current_line_index}.end")
@@ -515,17 +512,29 @@ def indent_next_line(event):
     leading_spaces = len(current_line_content) - len(current_line_content.lstrip())
 
     if "{" in current_line_content:
-        text_widget.insert(tk.INSERT, "\n" + indentation)
+        text_widget.insert(tk.INSERT, "\n" + indentation + "\n" + " " * leading_spaces)
+        text_widget.insert(tk.INSERT, "}")
+        text_widget.mark_set(tk.INSERT, f"{current_line_index + 1}.{leading_spaces + len(indentation)}")
+        return 'break'
     elif "}" in current_line_content:
-        text_widget.indent_level = max(getattr(text_widget, 'indent_level', 0) - 1, 0)
-        text_widget.insert(tk.INSERT, "\n" + " " * (text_widget.indent_level * len(indentation)))
-        text_widget.see(tk.INSERT)
+        next_line_index = current_line_index + 1
+        next_line_content = text_widget.get(f"{next_line_index}.0", f"{next_line_index}.end")
+        if not next_line_content.strip():
+            text_widget.insert(tk.INSERT, "\n")
+            text_widget.mark_set(tk.INSERT, f"{current_line_index + 1}.0")
+            return 'break'
+        else:
+            text_widget.insert(tk.INSERT, "\n" + " " * leading_spaces)
+            text_widget.indent_level = max(getattr(text_widget, 'indent_level', 0) - 1, 0)
+            return 'break'
     else:
         text_widget.insert(tk.INSERT, "\n" + " " * leading_spaces)
     return 'break'
 
+text_widget.bind("<Tab>", insert_spaces)
+text_widget.indent_level = 0
 text_widget.bind("<Return>", indent_next_line)
 
-# root.after(100, play_intro)
 
+# root.after(100, play_intro)
 root.mainloop()
