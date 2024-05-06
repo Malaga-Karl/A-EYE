@@ -264,43 +264,41 @@ frame_navbar.place(x=0, y=0, width=screen_width, height=50)
 logo_image = tk.PhotoImage(file="A-Eye Logo.png") 
 logo_image = logo_image.subsample(7, 7)  
 logo_label = tk.Label(frame_navbar, image=logo_image, bg="#0F0F0F")
-logo_label.pack(side="left", padx=10)  
+logo_label.pack(side="left", padx=6)  
 
 #Title
 title_label = tk.Label(frame_navbar, text="A - Eye Compiler", font=("Pirate Scroll", 22), fg="white", bg="#0F0F0F")
-title_label.pack(side="left", pady=6)
+title_label.pack(side="left", pady=6, padx=(15, 35))
 
 frame_navbar.lift()
 frame_btnsNavBar = tk.Frame(frame_navbar)
 frame_btnsNavBar.pack(side="left")  
+
+#Buttons for navigation
 button_width = 12
-button_padding = 5
-
-#Buttons for navigation:
-
-
-
+button_height = 30
+button_padding = 6
 
 #Lexical Button
-btn_lexical = tk.Button(frame_btnsNavBar, text="⚓ Lexical", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", command=analyze_code, width=button_width, padx=10)
+btn_lexical = tk.Button(frame_btnsNavBar, text="⚓ Lexical", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", borderwidth=0, command=analyze_code, width=button_width, height=button_height, padx=button_padding)
 btn_lexical.pack(side="left", fill="both", expand=True)
 btn_lexical.bind("<Enter>", on_enter)
 btn_lexical.bind("<Leave>", on_leave)
 
 #Syntax Button
-btn_syntax = tk.Button( frame_btnsNavBar, text="⚓ Syntax", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", command=analyze_syntax, width=button_width, padx=8)
+btn_syntax = tk.Button( frame_btnsNavBar, text="⚓ Syntax", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", borderwidth=0, command=analyze_syntax, width=button_width, height=button_height, padx=button_padding)
 btn_syntax.pack(side="left", fill="both", expand=True)
 btn_syntax.bind("<Enter>", on_enter)
 btn_syntax.bind("<Leave>", on_leave)
 
 #Semantic button
-btn_semantic = tk.Button( frame_btnsNavBar, text="⚓ Semantic", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", command=analyze_semantics, width=button_width, padx=15)
+btn_semantic = tk.Button( frame_btnsNavBar, text="⚓ Semantic", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", borderwidth=0, command=analyze_semantics, width=button_width, height=button_height, padx=button_padding)
 btn_semantic.pack(side="left", fill="both", expand=True)
 btn_semantic.bind("<Enter>", on_enter)
 btn_semantic.bind("<Leave>", on_leave)
     
 #Close Button
-btn_close = tk.Button( frame_navbar, text="❌", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="white", relief="flat", command=close_app, width=10, height=30, compound=tk.CENTER, padx=5)
+btn_close = tk.Button( frame_navbar, text="❌", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="red", relief="flat", command=close_app, borderwidth=0, width=5, height=30, padx=5)
 btn_close.pack(side="right")
 btn_close.bind("<Enter>", on_enter)
 btn_close.bind("<Leave>", on_leave)
@@ -317,8 +315,10 @@ def clear_text_and_outputs(event=None):
 
     update_line_numbers()
     
-btn_delete = tk.Button( frame_navbar, text="🧹", font=("Pirate Scroll", 15), bg="#0F0F0F", fg="white", relief="flat", command=lambda: (clear_text_and_outputs()), width=10, height=50, compound=tk.CENTER, padx=2)
+btn_delete = tk.Button( frame_navbar, text="⚡", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="white", relief="flat", command=lambda: (clear_text_and_outputs()), borderwidth=0, width=10, height=30, padx=2)
 btn_delete.pack(side="right")
+btn_delete.bind("<Enter>", on_enter)
+btn_delete.bind("<Leave>", on_leave)
 
 #Text Editor Frame
 editor_frame = tk.Frame(frame_content)
@@ -445,10 +445,15 @@ def track_changes(event):
             
 text_widget.bind("<Key>", track_changes)
 
-btn_undo = tk.Button(frame_navbar, text="↩️", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="white", relief="flat", command=undo_action, width=10, height=30, compound=tk.CENTER, padx=5)
+# Undo and Redo Buttons
+btn_undo = tk.Button(frame_navbar, text="↩️", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="white", relief="flat", borderwidth=0, command=undo_action, width=10, height=30, padx=5)
 btn_undo.pack(side="right")
-btn_redo = tk.Button(frame_navbar, text="↪️", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="white", relief="flat", command=redo_action, width=10, height=30, compound=tk.CENTER, padx=5)
+btn_undo.bind("<Enter>", on_enter)
+btn_undo.bind("<Leave>", on_leave)
+btn_redo = tk.Button(frame_navbar, text="↪️", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="white", relief="flat", borderwidth=0, command=redo_action, width=10, height=30, padx=5)
 btn_redo.pack(side="right")
+btn_redo.bind("<Leave>", on_leave)
+btn_redo.bind("<Enter>", on_enter)
 
 #Colored Reserve Words
 def update_text_color(event=None):
