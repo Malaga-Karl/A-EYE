@@ -1,5 +1,0 @@
-Token(2, 'PINT', 'pint'),
-    Token(2, 'IDENTIFIER', 'g'),
-    Token(2, '=', '='),
-    Token(2, 'PINT_LIT', '1'),
-    Token(2, ';', ';'),

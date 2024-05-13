@@ -4,9 +4,14 @@ import lexer
 import syntax
 import semantics
 import imageio
+import threading
+import time
+import re
 from PIL import Image, ImageTk
 from moviepy.editor import VideoFileClip 
 from PIL import ImageSequence
+import generator
+#import generatedCode
 
 table = None
 
@@ -26,10 +31,8 @@ def analyze_code():
     else:
         terminal_text.insert(tk.END, "Lexical analysis successful" + "\n")
         terminal_text.config(state="disabled")
-        terminal_text.tag_configure("success", foreground="green")
+        terminal_text.tag_configure("success", foreground="light green")
         terminal_text.tag_add("success", "1.0", "end")
-
-    
 
     table_headers = ["Line #", "Lexeme", "Token"]
     table.delete(*table.get_children()) 
@@ -49,6 +52,8 @@ def analyze_syntax():
     result, errors = lexer.analyze_text(code)
     if not errors:
         syntax_result = syntax.analyze_syntax(result)
+        generator.generate(code)
+   
 
     terminal_text.config(state="normal")
     terminal_text.delete("1.0", "end")
@@ -57,10 +62,12 @@ def analyze_syntax():
             terminal_text.insert(tk.END, error.as_string() + "\n")
         terminal_text.config(state="disabled")
     else:
+        output = open("output.txt", "r")
         terminal_text.insert(tk.END, syntax_result + "\n")
+        terminal_text.insert(tk.END, output.read() + "\n")
         terminal_text.config(state="disabled")
         if syntax_result == "Syntax analysis successful":
-            terminal_text.tag_configure("success", foreground="green")
+            terminal_text.tag_configure("success", foreground="light green")
             terminal_text.tag_add("success", "1.0", "end")
 
     table_headers = ["Line #", "Lexeme", "Token"]
@@ -92,12 +99,12 @@ def analyze_semantics():
     else:
         terminal_text.insert(tk.END, syntax_result + "\n")
         if syntax_result == "Syntax analysis successful":
-            terminal_text.tag_configure("success", foreground="green")
+            terminal_text.tag_configure("success", foreground="light green")
             terminal_text.tag_add("success", "1.0", "end")
         terminal_text.insert(tk.END, semantics_result + "\n")
         terminal_text.config(state="disabled")
         if semantics_result == "Semantic analysis successful":
-            terminal_text.tag_configure("success", foreground="green")
+            terminal_text.tag_configure("success", foreground="light green")
             terminal_text.tag_add("success", "1.0", "end")
         else:
             terminal_text.tag_configure("error", foreground="red") 
@@ -123,8 +130,8 @@ def update_line_numbers(*args):
     line_numbers.insert("1.0", lines_text)
     line_numbers.config(state="disabled")
 
-    update_line_visibility()
-    
+    update_line_visibility(*args)
+
 def update_line_visibility(*args):
     text_widget.yview(*args)
     line_numbers.yview(*args)
@@ -156,21 +163,6 @@ def clear_text_and_outputs():
     line_numbers.delete("1.0", "end")
     line_numbers.config(state="disabled")
 
-def on_entry_click(event):
-    current_text = text_widget.get("1.0", "end-1c").strip()
-    placeholder_text = 'Start the code here ...................'
-
-    if current_text == placeholder_text:
-        text_widget.delete("1.0", "end-1c")
-    text_widget.config(fg="white", font=("Courier New", 12, "normal"))
-
-def on_focus_out(event):
-    current_text = text_widget.get("1.0", "end-1c").strip()
-    placeholder_text = 'Start the code here ...................'
-
-    if not current_text:
-        text_widget.insert("1.0", placeholder_text)
-        text_widget.config(fg="#8a8a8a", font=("Courier New", 12, "italic"))
         
 def on_delete(event):
     current_text = text_widget.get("1.0", "end-1c")
@@ -188,31 +180,46 @@ def on_delete(event):
 
     text_widget.bind("<Delete>", on_delete)
     
-# #GIF Runtime
-def load_gif_frames(gif_path):
-    gif = Image.open(gif_path)
-    frames = [ImageTk.PhotoImage(frame) for frame in ImageSequence.Iterator(gif)]
-    return frames
+# # #GIF Runtime
+# def load_gif_frames(gif_path):
+#     gif = Image.open(gif_path)
+#     frames = [ImageTk.PhotoImage(frame) for frame in ImageSequence.Iterator(gif)]
+#     return frames
 
-# #MoviePy Video
-def play_intro():
-    video_path = "A-Eye Intro.mp4"  
-    clip = VideoFileClip(video_path)
-    intro_window = tk.Toplevel(root)
-    intro_window.attributes("-fullscreen", True)
-    clip = clip.resize(width=intro_window.winfo_screenwidth(), height=intro_window.winfo_screenheight())
-    video_label = tk.Label(intro_window)
-    video_label.pack(expand="true", fill="both")
-    clip.preview(fps=24)
+# # #MoviePy Video
+# def play_video():
+#     global clip, intro_window, root
+    
+#     def close_intro():
+#         intro_window.destroy()
+#         clip.close()
+    
+#     clip.preview(fps=24)
+    
+#     time.sleep(1)
+#     intro_window.after(0, close_intro)
+    
+# def play_intro():
+#     global clip, intro_window
+    
+#     video_path = "A-Eye Intro.mp4"  
+#     clip = VideoFileClip(video_path)
+    
+#     intro_window = tk.Toplevel(root)
+#     intro_window.attributes("-fullscreen", True)
+    
+#     clip = clip.resize(width=intro_window.winfo_screenwidth(), height=intro_window.winfo_screenheight())
+#     video_label = tk.Label(intro_window)
+#     video_label.pack(expand="true", fill="both")
+    
+#     playback_thread = threading.Thread(target=play_video)
+#     playback_thread.start()
 
-    intro_window.destroy()
-    clip.close() 
-
-def update_frame(frame_index=0):
-    frame = frames[frame_index]
-    background_label.configure(image=frame)
-    background_label.image = frame  
-    root.after(10, update_frame, (frame_index + 1) % len(frames))  
+# def update_frame(frame_index=0):
+#     frame = frames[frame_index]
+#     background_label.configure(image=frame)
+#     background_label.image = frame  
+#     root.after(10, update_frame, (frame_index + 1) % len(frames))  
 
 #Main Window
 root = tk.Tk()
@@ -224,30 +231,28 @@ root.configure(bg="#373737")
 icon_image = tk.PhotoImage(file="A-Eye Logo.png")
 root.iconphoto(True, icon_image)
 
-gif_path = "background.gif"
+# gif_path = "background.gif"
 
-def load_gif_frames(gif_path):
-    reader = imageio.get_reader(gif_path, format='gif')
-    frames = [ImageTk.PhotoImage(Image.fromarray(frame)) for frame in reader]
-    return frames
+# def load_gif_frames(gif_path):
+#     reader = imageio.get_reader(gif_path, format='gif')
+#     frames = [ImageTk.PhotoImage(Image.fromarray(frame)) for frame in reader]
+#     return frames
 
-frames = load_gif_frames(gif_path)
-
-play_intro() 
+# frames = load_gif_frames(gif_path)
 
 frame_content = tk.Frame(root, bg="#7C1520")
 frame_content.place(x=0, y=0, width=screen_width, height=screen_height)
 
-def update_frame(frame_index=0):
-    frame = frames[frame_index]
-    background_label.configure(image=frame)
-    background_label.image = frame  
-    root.after(100, update_frame, (frame_index + 1) % len(frames))  
+# def update_frame(frame_index=0):
+#     frame = frames[frame_index]
+#     background_label.configure(image=frame)
+#     background_label.image = frame  
+#     root.after(100, update_frame, (frame_index + 1) % len(frames))  
 
 background_label = tk.Label(frame_content, bg="#7C1520")
 background_label.place(x=0, y=0, relwidth=1, relheight=1)
 
-update_frame()
+# update_frame()
 
 style = ttk.Style()
 style.theme_use("default")
@@ -259,11 +264,11 @@ frame_navbar.place(x=0, y=0, width=screen_width, height=50)
 logo_image = tk.PhotoImage(file="A-Eye Logo.png") 
 logo_image = logo_image.subsample(7, 7)  
 logo_label = tk.Label(frame_navbar, image=logo_image, bg="#0F0F0F")
-logo_label.pack(side="left", padx=10)  
+logo_label.pack(side="left", padx=6)  
 
 #Title
 title_label = tk.Label(frame_navbar, text="A - Eye Compiler", font=("Pirate Scroll", 22), fg="white", bg="#0F0F0F")
-title_label.pack(side="left", pady=6)
+title_label.pack(side="left", pady=6, padx=(15, 35))
 
 frame_navbar.lift()
 frame_btnsNavBar = tk.Frame(frame_navbar)
@@ -272,37 +277,37 @@ button_width = 12
 button_padding = 5
 
 #Buttons for navigation:
-
-
+button_width = 12
+button_height = 30
+button_padding = 6
 
 
 #Lexical Button
-btn_lexical = tk.Button(frame_btnsNavBar, text="⚓ Lexical", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", command=analyze_code, width=button_width, padx=10)
+btn_lexical = tk.Button(frame_btnsNavBar, text="⚓ Lexical", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", borderwidth=0, command=analyze_code, width=button_width, height=button_height, padx=button_padding)
 btn_lexical.pack(side="left", fill="both", expand=True)
 btn_lexical.bind("<Enter>", on_enter)
 btn_lexical.bind("<Leave>", on_leave)
 
 #Syntax Button
-btn_syntax = tk.Button( frame_btnsNavBar, text="⚓ Syntax", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", command=analyze_syntax, width=button_width, padx=8)
+btn_syntax = tk.Button( frame_btnsNavBar, text="⚓ Syntax", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", borderwidth=0, command=analyze_syntax, width=button_width, height=button_height, padx=button_padding)
 btn_syntax.pack(side="left", fill="both", expand=True)
 btn_syntax.bind("<Enter>", on_enter)
 btn_syntax.bind("<Leave>", on_leave)
 
 #Semantic button
-btn_semantic = tk.Button( frame_btnsNavBar, text="⚓ Semantic", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", command=analyze_semantics, width=button_width, padx=15)
+btn_semantic = tk.Button( frame_btnsNavBar, text="⚓ Semantic", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", borderwidth=0, command=analyze_semantics, width=button_width, height=button_height, padx=button_padding)
 btn_semantic.pack(side="left", fill="both", expand=True)
 btn_semantic.bind("<Enter>", on_enter)
 btn_semantic.bind("<Leave>", on_leave)
     
 #Close Button
-btn_close = tk.Button( frame_navbar, text="❌", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="white", relief="flat", command=close_app, width=10, height=30, compound=tk.CENTER, padx=5)
+btn_close = tk.Button( frame_navbar, text="❌", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="red", relief="flat", command=close_app, borderwidth=0, width=5, height=30, padx=5)
 btn_close.pack(side="right")
 btn_close.bind("<Enter>", on_enter)
 btn_close.bind("<Leave>", on_leave)
 
 #Delete Button
 def clear_text_and_outputs(event=None): 
-    text_widget.bind("<FocusIn>", on_entry_click)
     text_widget.delete("1.0", "end")
     text_widget.config(fg="white", font=("Courier New", 12, "normal"))
     table.delete(*table.get_children())
@@ -312,10 +317,11 @@ def clear_text_and_outputs(event=None):
     terminal_text.config(state="disabled")
 
     update_line_numbers()
-    text_widget.unbind("<FocusIn>", on_entry_click)
     
-btn_delete = tk.Button( frame_navbar, text="🧹", font=("Pirate Scroll", 15), bg="#0F0F0F", fg="white", relief="flat", command=lambda: (clear_text_and_outputs(), on_focus_out(None)), width=10, height=50, compound=tk.CENTER, padx=2)
+btn_delete = tk.Button( frame_navbar, text="🧹", font=("Pirate Scroll", 15), bg="#0F0F0F", fg="white", relief="flat", command=lambda: (clear_text_and_outputs()), width=10, height=50, compound=tk.CENTER, padx=2)
 btn_delete.pack(side="right")
+btn_delete.bind("<Enter>", on_enter)
+btn_delete.bind("<Leave>", on_leave)
 
 #Text Editor Frame
 editor_frame = tk.Frame(frame_content)
@@ -325,14 +331,13 @@ editor_frame.place(x=85, y=50, width=1000, height=484)
 line_number_frame = tk.Frame(editor_frame)
 line_number_frame.pack(side="left", fill="y")
 
-text_widget = tk.Text(editor_frame, wrap="none", height=screen_height-50, bg="#121212", fg="white", bd=0, padx=10, font=("Courier New", 12))
+text_widget = tk.Text(editor_frame, wrap="none", height=screen_height-50, bg="#121212", fg="white", bd=0, padx=10, font=("Courier New", 12), undo=True, autoseparators=True)
 text_widget.pack(side="left", fill="both", expand=True)
 text_widget.bind("<Key>", update_line_numbers)
-text_widget.insert("1.0", 'Start the code here ...................')
-text_widget.config(fg="#8a8a8a", font=("Courier New", 12, "italic"))
-text_widget.bind("<FocusIn>", on_entry_click)
+text_widget.config(fg="white", font=("Courier New", 12))
+text_widget.focus_set()
 
-text_widget.config(yscrollcommand=lambda *args: (text_widget.yview(*args), update_line_numbers_on_scroll(*args)))
+text_widget.config(yscrollcommand=lambda *args: (text_widget.yview(*args), update_line_numbers(*args)))
 
 def update_line_numbers_on_scroll(event=None):
     first_visible_line = text_widget.index("@0,0").split(".")[0]
@@ -413,4 +418,130 @@ terminal_text['yscrollcommand'] = terminal_scrollbar.set
 
 style.configure("Vertical.TScrollbar", troughcolor="#808080", gripcount=0, relief="flat")
 
+
+#Other FunctionalitiesL:
+
+#Undo and Redo:
+undo_stack = []
+redo_stack = []
+
+def undo_action(event=None):
+    if undo_stack:
+        character = undo_stack.pop()
+        redo_stack.append(character)
+        text_widget.edit_undo()
+
+def redo_action(event=None):
+    if redo_stack:
+        character = redo_stack.pop()
+        undo_stack.append(character)
+        text_widget.edit_redo()
+
+def track_changes(event):
+    if event.char and event.keysym != "BackSpace" and event.keysym != "Delete":
+        undo_stack.append(event.char)
+    elif event.keysym == "":
+        char_index = text_widget.index(tk.INSERT)
+        if char_index != "1.0":
+            character = text_widget.get(char_index + "-1c")
+            undo_stack.append(character)
+            
+text_widget.bind("<Key>", track_changes)
+
+btn_undo = tk.Button(frame_navbar, text="↩️", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="white", relief="flat", borderwidth=0, command=undo_action, width=10, height=30, padx=5)
+btn_undo.pack(side="right")
+btn_undo.bind("<Enter>", on_enter)
+btn_undo.bind("<Leave>", on_leave)
+
+btn_redo = tk.Button(frame_navbar, text="↪️", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="white", relief="flat", borderwidth=0, command=redo_action, width=10, height=30, padx=5)
+btn_redo.pack(side="right")
+btn_redo.bind("<Leave>", on_leave)
+btn_redo.bind("<Enter>", on_enter)
+
+#Colored Reserve Words
+def update_text_color(event=None):
+    reserved_words = ["onboard", "offboard", "captain", "pint", "fleet", "bull", "doffy", "loyal", "fire", "load", "len", "theo", "alt", "althea", "helm", "chest", "dagger", "four", "whale", "real", "usopp", "and", "oro", "nay", "leak", "sail", "anchor", "pass", "void", "home"]
+
+    text_widget.tag_remove("reserved_words", "1.0", "end")
+    text_widget.tag_remove("brackets", "1.0", "end")
+    text_widget.tag_remove("quotes", "1.0", "end")
+
+    # For Reserved Words
+    for keyword in reserved_words:
+        pattern = r'\b' + re.escape(keyword) + r'\b'
+        for match in re.finditer(pattern, text_widget.get("1.0", "end"), re.IGNORECASE):
+            start_index = "1.0" + "+%dc" % match.start()
+            end_index = "1.0" + "+%dc" % match.end()
+            # Check if the matched word is lowercase
+            if text_widget.get(start_index, end_index).islower():
+                text_widget.tag_add("reserved_words", start_index, end_index)
+                
+    #For Brackets
+    for bracket in ['(', ')', '{', '}', '[', ']']:
+        pattern = re.escape(bracket)
+        for match in re.finditer(pattern, text_widget.get("1.0", "end")):
+            start_index = "1.0" + "+%dc" % match.start()
+            end_index = "1.0" + "+%dc" % match.end()
+            text_widget.tag_add("brackets", start_index, end_index)
+            
+    #For Doffy/String
+    quote_pairs = [('"', '"'), ("'", "'")]
+    for opening, closing in quote_pairs:
+        start_index = "1.0"
+        while True:
+            start_index = text_widget.search(re.escape(opening), start_index, stopindex="end")
+            if not start_index:
+                break
+            end_index = text_widget.search(re.escape(closing), f"{start_index}+1c", stopindex="end")
+            if not end_index:
+                break
+            end_index = f"{end_index}+1c"
+            text_widget.tag_add("quotes", start_index, end_index)
+            start_index = end_index
+
+    text_widget.tag_config("reserved_words", foreground="#5BBCFF")
+    text_widget.tag_config("brackets", foreground="#FDDE55")
+    text_widget.tag_config("quotes", foreground="#68D2E8")
+
+    update_line_numbers()
+
+text_widget.bind("<KeyRelease>", update_text_color)
+
+#Indention
+def insert_spaces(event):
+    text_widget.insert(tk.INSERT, "    ")  
+    return 'break'  
+
+def indent_next_line(event):
+    current_line_index = int(text_widget.index(tk.INSERT).split('.')[0])
+    current_line_content = text_widget.get(f"{current_line_index}.0", f"{current_line_index}.end")
+    indentation = "    "
+    
+    leading_spaces = len(current_line_content) - len(current_line_content.lstrip())
+
+    if "{" in current_line_content:
+        text_widget.insert(tk.INSERT, "\n" + indentation + "\n" + " " * leading_spaces)
+        text_widget.insert(tk.INSERT, "}")
+        text_widget.mark_set(tk.INSERT, f"{current_line_index + 1}.{leading_spaces + len(indentation)}")
+        return 'break'
+    elif "}" in current_line_content:
+        next_line_index = current_line_index + 1
+        next_line_content = text_widget.get(f"{next_line_index}.0", f"{next_line_index}.end")
+        if not next_line_content.strip():
+            text_widget.insert(tk.INSERT, "\n")
+            text_widget.mark_set(tk.INSERT, f"{current_line_index + 1}.0")
+            return 'break'
+        else:
+            text_widget.insert(tk.INSERT, "\n" + " " * leading_spaces)
+            text_widget.indent_level = max(getattr(text_widget, 'indent_level', 0) - 1, 0)
+            return 'break'
+    else:
+        text_widget.insert(tk.INSERT, "\n" + " " * leading_spaces)
+    return 'break'
+
+text_widget.bind("<Tab>", insert_spaces)
+text_widget.indent_level = 0
+text_widget.bind("<Return>", indent_next_line)
+
+# root.after(100, play_intro)
 root.mainloop()
