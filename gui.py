@@ -54,7 +54,6 @@ def analyze_syntax():
         syntax_result = syntax.analyze_syntax(result)
         generator.generate(code)
    
-
     terminal_text.config(state="normal")
     terminal_text.delete("1.0", "end")
     if errors:

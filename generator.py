@@ -7,8 +7,8 @@ class Generator:
         self.code = code
 
 
-replacements = {
-    ';' : '\n',
+statement_replacements = {
+    ';' : '; ',
     'captain': 'def main',
     'fire': 'print',
     'load': 'input',
@@ -23,10 +23,15 @@ replacements = {
     'usopp' : 'False',
     'oro' : 'or',
     'nay' : 'not',
-    '{' : ':\n',
+    '{' : ':',
+    '} ' : '}',
     '}' : '',
     # ',' : '\n',
-    'home': 'return'
+    'home': 'return',
+    'pint ': '',
+    'fleet ': '',
+    'doffy ': '',
+    'bull ': ''
 }
 
 def nth_repl(s, sub, repl, n):
@@ -43,6 +48,17 @@ def nth_repl(s, sub, repl, n):
         return s[:find] + repl + s[find+len(sub):]
     return s
 
+def remove_dtye(line):
+    if 'pint ' in line:
+        line = line.replace('pint', '')
+    elif 'fleet ' in line:
+        line = line.replace('fleet', '')
+    elif 'doffy ' in line:
+        line = line.replace('doffy', '')
+    elif 'bull ' in line:
+        line = line.replace('bull', '')
+    return line
+
 def generate(code):
     # Split code by lines
     code = code.split("\n")
@@ -51,51 +67,90 @@ def generate(code):
     lastLine = code.index("offboard")
 
     # Temporary variable counter: will start the count in t1 
-    temp_var_counter = 1
-    temp_vars = {}
+    # temp_var_counter = 1
+    # temp_vars = {}
 
     # Iterate through lines
     for i in range(firstLine, lastLine):
-        if code[i] == "":
+        line = code[i]
+        if line == "":
             continue
         
-        firstWord = code[i].split()[0] if len(code[i].split()) > 1 else ""
+        firstWord = line.split()[0] if len(line.split()) > 1 else ""
         
-        for key in replacements.keys():
-            code[i] = code[i].replace(key, replacements[key])
-
         if firstWord in ['pint', 'fleet', 'doffy', 'bull', 'void']:
-            if "()" in code[i].split()[1]:  # Function statement    
-                code[i] = code[i].replace(firstWord, 'def')
-                parameters = re.findall(r'\(.*?\)', code[i])
+            firstWord = firstWord + ' '
+            if "()" in line.split()[1]:  # Function statement    
+                line = line.replace(firstWord, 'def ')
+                parameters = re.findall(r'\(.*?\)', line)
                 if len(parameters) > 0:
-                    if "fleet" in parameters: code[i] = code[i].replace("fleet", "")
-                    if "doffy" in parameters: code[i] = code[i].replace("doffy", "")
-                    if "bull" in parameters: code[i] = code[i].replace("bull", "")
-            else:  # Variable statement
-                length = len(code[i].split())
-                afterType = " ".join(code[i].split()[1:])
-                code[i] = code[i].replace(firstWord, afterType)
-                # code[i]=replacenth(code[i], afterType, "", 2)
-                code[i] = nth_repl(code[i], afterType, "", 2)
-
+                    if "fleet" in parameters: line = line.replace("fleet ", "")
+                    if "doffy" in parameters: line = line.replace("doffy ", "")
+                    if "bull" in parameters: line = line.replace("bull ", "")
+            else:
+                line = line.replace(firstWord, '')
+            # else:  # Variable statement
+            #     length = len(line.split())
+            #     afterType = " ".join(line.split()[1:])        
+            #     line = line.replace(firstWord, afterType)
+            #     # line=replacenth(line, afterType, "", 2)
+            #     line = nth_repl(line, afterType, "", 2)
         
+        if 'four(' in line:
+            in_for = re.findall(r'\(.*?\)', line)
+            in_for_no_parenthesis = str(in_for[0].replace('(', '').replace(')', ''))
+            in_for_no_parenthesis = str("".join(in_for_no_parenthesis))
+            in_for_no_parenthesis = remove_dtye(in_for_no_parenthesis)
+            in_for_split = in_for_no_parenthesis.split(';')
+
+           
+            variable = in_for_split[0].split()[0]
+            var_value = in_for_split[0].split()[2]
+            ending_point = in_for_split[1].split()[2]
+            condition = in_for_split[1].replace(variable, var_value)
+            if eval(condition):
+                    starting_point = var_value
+                    if ending_point.isnumeric():
+                        ending_point = ending_point if '=' not in condition else str(int(ending_point) + 1)
+                    else:
+                        ending_point = ending_point if '=' not in condition else str(ending_point + "+1")
+            else:
+                starting_point = ending_point
+            
+
+
+
+            # # if '++' in in_for[2]:
+            # #     step = 1
+            # # elif '--' in in_for[2]:
+            # #     step = -1
+            step = 1
+            line = line.replace(in_for[0], f' {variable} in range({starting_point}, {ending_point}, {step})')
+        for key in statement_replacements.keys():
+            line = line.replace(key, statement_replacements[key])
+        
+        # for( i = 5; i <= 5; i++)
+        # i = 5
+        # i <= 5
+        # i ++
+        #  i = 5
+            
         # Application of TAC in Expressions
-        if 'fire' in code[i]: #Detection of fire
-            expression = code[i].split('fire ')[1] #If there is Fire, extraction of expression will happen
-            terms = expression.split() #Tokenization
-            result_var = terms[0] #First Term in expression represents the variable
-            new_expression = '' #Starting Point of Constant Replacement
-            for term in terms[1:]:
-                if term in replacements:
-                    new_expression += replacements[term] + ' '
-                else:
-                    new_expression += term + ' '
-            temp_var = f't{temp_var_counter}' #Hold intermiate result
-            temp_vars[temp_var] = new_expression #Replacemnrs
-            code[i] = f'{temp_var} = {new_expression}\n' #Assignment of value
-            code.insert(i + 1, f'fire {result_var} {temp_var}\n')
-            temp_var_counter += 1 #Increment
+        # if 'fire' in line: #Detection of fire
+        #     expression = line.split('fire ')[1] #If there is Fire, extraction of expression will happen
+        #     terms = expression.split() #Tokenization
+        #     result_var = terms[0] #First Term in expression represents the variable
+        #     new_expression = '' #Starting Point of Constant Replacement
+        #     for term in terms[1:]:
+        #         if term in replacements:
+        #             new_expression += replacements[term] + ' '
+        #         else:
+        #             new_expression += term + ' '
+        #     temp_var = f't{temp_var_counter}' #Hold intermiate result
+        #     temp_vars[temp_var] = new_expression #Replacemnrs
+        #     line = f'{temp_var} = {new_expression}\n' #Assignment of value
+        #     code.insert(i + 1, f'fire {result_var} {temp_var}\n')
+        #     temp_var_counter += 1 #Increment
             
         # Example: 
         # fire (a + b * c / a) will be converted to:
@@ -104,11 +159,11 @@ def generate(code):
         # t3 = a + t2
         # fire t3
 
-        pyfile.write(code[i])
+        pyfile.write(line + '\n')
 
-    # Out the Temporary Used Variables 
-    for var, expression in temp_vars.items():
-        pyfile.write(f'{var} = {expression}\n')
+    # # Out the Temporary Used Variables 
+    # for var, expression in temp_vars.items():
+    #     pyfile.write(f'{var} = {expression}\n')
 
     pyfile.write("\nif __name__ == '__main__':\n    main()")
     pyfile.close()
