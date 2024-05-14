@@ -28,6 +28,7 @@ def analyze_code():
     if errors:
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n")
+            terminal_text.tag_configure(foreground="light red")
     else:
         terminal_text.insert(tk.END, "Lexical analysis successful" + "\n")
         terminal_text.config(state="disabled")
@@ -59,6 +60,7 @@ def analyze_syntax():
     if errors:
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n")
+            terminal_text.tag_configure(foreground="light red")
         terminal_text.config(state="disabled")
     else:
         output = open("output.txt", "r")
@@ -84,31 +86,72 @@ def analyze_semantics():
     placeholder_text = 'Start the code here ...................'
     if code == placeholder_text:
         return
+    
     result, errors = lexer.analyze_text(code)
-    if not errors:
-        syntax_result = syntax.analyze_syntax(result)
-        semantics_result = semantics.analyze(result)
-
+    
     terminal_text.config(state="normal")
     terminal_text.delete("1.0", "end")
+    
     if errors:
+        # Display lexical errors in light red
         for error in errors:
-            terminal_text.insert(tk.END, error.as_string() + "\n")
+            terminal_text.insert(tk.END, error.as_string() + "\n", "error")
+        terminal_text.tag_configure("error", foreground="#light red")
         terminal_text.config(state="disabled")
+        return False, result, errors
+    
+    syntax_result = syntax.analyze_syntax(result)
+    semantics_result = semantics.analyze(result)
+    
+    if syntax_result == "Syntax analysis successful":
+        terminal_text.insert(tk.END, syntax_result + "\n", "success")
+        terminal_text.tag_configure("success", foreground="light green")
     else:
-        terminal_text.insert(tk.END, syntax_result + "\n")
-        if syntax_result == "Syntax analysis successful":
-            terminal_text.tag_configure("success", foreground="light green")
-            terminal_text.tag_add("success", "1.0", "end")
-        terminal_text.insert(tk.END, semantics_result + "\n")
+        terminal_text.insert(tk.END, syntax_result + "\n", "error")
+        terminal_text.tag_configure("error", foreground="#light red")
         terminal_text.config(state="disabled")
-        if semantics_result == "Semantic analysis successful":
-            terminal_text.tag_configure("success", foreground="light green")
-            terminal_text.tag_add("success", "1.0", "end")
-        else:
-            terminal_text.tag_configure("error", foreground="red") 
-            terminal_text.tag_add("error", "end-2l", "end")  
+        return False, result, [syntax_result]
         
+    if semantics_result == "Semantic analysis successful":
+        terminal_text.insert(tk.END, semantics_result + "\n", "success")
+        terminal_text.tag_configure("success", foreground="light green")
+    else:
+        terminal_text.insert(tk.END, semantics_result + "\n", "error")
+        terminal_text.tag_configure("error", foreground="#light red")
+        terminal_text.config(state="disabled")
+        return False, result, [semantics_result]
+    
+    # Disable editing after displaying the message
+    terminal_text.config(state="disabled")
+
+    # Update table with lexical tokens
+    table_headers = ["Line #", "Lexeme", "Token"]
+    table.delete(*table.get_children()) 
+    
+    for token in result:
+        row = [str(token.line_number), token.value if token.value else "", token.type]
+        table.insert("", "end", values=row)
+    
+    return True, result, []
+
+def run_code():
+    success, result, errors = analyze_semantics()
+    
+    if not success:
+        return
+    
+    code = text_widget.get("1.0", "end").strip()
+    generator.generate(code)
+    
+    terminal_text.config(state="normal")
+    terminal_text.delete("1.0", "end")
+    
+    with open("output.txt", "r") as output_file:
+        terminal_text.insert(tk.END, output_file.read() + "\n")
+    
+    terminal_text.config(fg="light green")
+    terminal_text.config(state="disabled")
+
     table_headers = ["Line #", "Lexeme", "Token"]
     table.delete(*table.get_children()) 
     
@@ -128,8 +171,6 @@ def update_line_numbers(*args):
     lines_text = "\n".join(lines)
     line_numbers.insert("1.0", lines_text)
     line_numbers.config(state="disabled")
-
-    update_line_visibility(*args)
 
 def update_line_visibility(*args):
     text_widget.yview(*args)
@@ -161,7 +202,6 @@ def clear_text_and_outputs():
     line_numbers.config(state="normal")
     line_numbers.delete("1.0", "end")
     line_numbers.config(state="disabled")
-
         
 def on_delete(event):
     current_text = text_widget.get("1.0", "end-1c")
@@ -298,6 +338,12 @@ btn_semantic = tk.Button( frame_btnsNavBar, text="⚓ Semantic", font=("Pirate S
 btn_semantic.pack(side="left", fill="both", expand=True)
 btn_semantic.bind("<Enter>", on_enter)
 btn_semantic.bind("<Leave>", on_leave)
+
+# Run button
+btn_run = tk.Button(frame_btnsNavBar, text="▶️ Run", font=("Pirate Scroll", 16), bg="#0F0F0F", fg="#ff6961", relief="flat", borderwidth=0, command=run_code, width=button_width, height=button_height, padx=button_padding)
+btn_run.pack(side="left", fill="both", expand=True)
+btn_run.bind("<Enter>", on_enter)
+btn_run.bind("<Leave>", on_leave)
     
 #Close Button
 btn_close = tk.Button( frame_navbar, text="❌", font=("Pirate Scroll", 11), bg="#0F0F0F", fg="red", relief="flat", command=close_app, borderwidth=0, width=5, height=30, padx=5)
@@ -307,20 +353,36 @@ btn_close.bind("<Leave>", on_leave)
 
 #Delete Button
 def clear_text_and_outputs(event=None): 
+    # Clear the text widget
     text_widget.delete("1.0", "end")
+    
+    # Apply autoformatting
+    text_widget.insert(tk.END, "onboard\ncaptain(){\n    \n}\noffboard")
+    text_widget.mark_set(tk.INSERT, "3.5")
+    update_text_color()
+    
+    # Reset text widget appearance
     text_widget.config(fg="white", font=("Courier New", 12, "normal"))
+    
+    # Clear the table
     table.delete(*table.get_children())
 
+    # Clear and disable the terminal text
     terminal_text.config(state="normal", font=("Courier New", 12, "normal"))
     terminal_text.delete("1.0", "end")
     terminal_text.config(state="disabled")
 
+    # Update line numbers
     update_line_numbers()
-    
-btn_delete = tk.Button( frame_navbar, text="🧹", font=("Pirate Scroll", 15), bg="#0F0F0F", fg="white", relief="flat", command=lambda: (clear_text_and_outputs()), width=10, height=50, compound=tk.CENTER, padx=2)
+
+# Create the delete button
+btn_delete = tk.Button(frame_navbar, text="🧹", font=("Pirate Scroll", 15), bg="#0F0F0F", fg="white", relief="flat", width=10, height=50, compound=tk.CENTER, padx=2)
 btn_delete.pack(side="right")
 btn_delete.bind("<Enter>", on_enter)
 btn_delete.bind("<Leave>", on_leave)
+
+# Bind the clear_text_and_outputs function to the delete button
+btn_delete.config(command=clear_text_and_outputs)
 
 #Text Editor Frame
 editor_frame = tk.Frame(frame_content)
@@ -464,26 +526,29 @@ def update_text_color(event=None):
     text_widget.tag_remove("reserved_words", "1.0", "end")
     text_widget.tag_remove("brackets", "1.0", "end")
     text_widget.tag_remove("quotes", "1.0", "end")
+    text_widget.tag_remove("comments", "1.0", "end")
+    text_widget.tag_remove("block_comments", "1.0", "end")
+
+    content = text_widget.get("1.0", "end")
 
     # For Reserved Words
     for keyword in reserved_words:
         pattern = r'\b' + re.escape(keyword) + r'\b'
-        for match in re.finditer(pattern, text_widget.get("1.0", "end"), re.IGNORECASE):
-            start_index = "1.0" + "+%dc" % match.start()
-            end_index = "1.0" + "+%dc" % match.end()
-            # Check if the matched word is lowercase
+        for match in re.finditer(pattern, content, re.IGNORECASE):
+            start_index = f"1.0 + {match.start()}c"
+            end_index = f"1.0 + {match.end()}c"
             if text_widget.get(start_index, end_index).islower():
                 text_widget.tag_add("reserved_words", start_index, end_index)
-                
-    #For Brackets
+
+    # For Brackets
     for bracket in ['(', ')', '{', '}', '[', ']']:
         pattern = re.escape(bracket)
-        for match in re.finditer(pattern, text_widget.get("1.0", "end")):
-            start_index = "1.0" + "+%dc" % match.start()
-            end_index = "1.0" + "+%dc" % match.end()
+        for match in re.finditer(pattern, content):
+            start_index = f"1.0 + {match.start()}c"
+            end_index = f"1.0 + {match.end()}c"
             text_widget.tag_add("brackets", start_index, end_index)
-            
-    #For Doffy/String
+
+    # For Quotes
     quote_pairs = [('"', '"'), ("'", "'")]
     for opening, closing in quote_pairs:
         start_index = "1.0"
@@ -498,24 +563,51 @@ def update_text_color(event=None):
             text_widget.tag_add("quotes", start_index, end_index)
             start_index = end_index
 
+    # For Single Line Comments
+    pattern = r'#[^#].*'
+    for match in re.finditer(pattern, content):
+        start_index = f"1.0 + {match.start()}c"
+        end_index = f"1.0 + {match.end()}c"
+        text_widget.tag_add("comments", start_index, end_index)
+
+    # For Block Comments
+    start = "1.0"
+    while True:
+        start = text_widget.search("##", start, stopindex="end", regexp=True)
+        if not start:
+            break
+        end = text_widget.search("##", f"{start}+2c", stopindex="end", regexp=True)
+        if not end:
+            end = "end"
+        else:
+            end = f"{end}+2c"
+        text_widget.tag_add("block_comments", start, end)
+        start = end
+
+        # Remove green color for text after block comments
+        end_line, _ = end.split('.')
+        next_line = f"{end_line}.end"
+        text_widget.tag_remove("comments", end, next_line)
+
     text_widget.tag_config("reserved_words", foreground="#5BBCFF")
     text_widget.tag_config("brackets", foreground="#FDDE55")
     text_widget.tag_config("quotes", foreground="#68D2E8")
+    text_widget.tag_config("comments", foreground="#008000")
+    text_widget.tag_config("block_comments", foreground="#008000")
 
-    update_line_numbers()
+# Bind the function to the text widget
+text_widget.bind("<KeyRelease>", lambda event: (update_text_color(event), update_line_numbers(event)))
 
-text_widget.bind("<KeyRelease>", update_text_color)
-
-#Indention
+# Indentation functions
 def insert_spaces(event):
-    text_widget.insert(tk.INSERT, "    ")  
-    return 'break'  
+    text_widget.insert(tk.INSERT, "    ")
+    return 'break'
 
 def indent_next_line(event):
     current_line_index = int(text_widget.index(tk.INSERT).split('.')[0])
     current_line_content = text_widget.get(f"{current_line_index}.0", f"{current_line_index}.end")
     indentation = "    "
-    
+
     leading_spaces = len(current_line_content) - len(current_line_content.lstrip())
 
     if "{" in current_line_content:
@@ -541,6 +633,11 @@ def indent_next_line(event):
 text_widget.bind("<Tab>", insert_spaces)
 text_widget.indent_level = 0
 text_widget.bind("<Return>", indent_next_line)
+
+#Auto Format
+text_widget.insert(tk.END, "onboard\ncaptain(){\n    \n}\noffboard")
+text_widget.mark_set(tk.INSERT, "3.5")
+update_text_color()
 
 # root.after(100, play_intro)
 root.mainloop()

@@ -66,6 +66,8 @@ def generate(code):
     firstLine = code.index("onboard") + 1
     lastLine = code.index("offboard")
 
+    inside_comment = False
+    
     # Temporary variable counter: will start the count in t1 
     # temp_var_counter = 1
     # temp_vars = {}
@@ -76,8 +78,28 @@ def generate(code):
         if line == "":
             continue
         
+        # Check for multiline comment start and end
+        if '##' in code[i]:
+            if '##' in code[i] and not inside_comment:
+                inside_comment = True
+            elif '##' in code[i] and inside_comment:
+                inside_comment = False
+            continue
+        
+        # Skip line if inside a comment
+        if inside_comment:
+            continue
+        
+        # Check for single-line comment
+        if '#' in code[i]:
+            code[i] = code[i].split('#')[0]  # Remove the comment part
+            code[i] = code[i].rstrip()  # Remove trailing whitespace
+
         firstWord = line.split()[0] if len(line.split()) > 1 else ""
         
+        for key in statement_replacements.keys():
+            code[i] = code[i].replace(key, statement_replacements[key])
+            
         if firstWord in ['pint', 'fleet', 'doffy', 'bull', 'void']:
             firstWord = firstWord + ' '
             if "()" in line.split()[1]:  # Function statement    
