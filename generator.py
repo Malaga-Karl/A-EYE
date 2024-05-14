@@ -31,7 +31,12 @@ statement_replacements = {
     'pint ': '',
     'fleet ': '',
     'doffy ': '',
-    'bull ': ''
+    'bull ': '',
+    '++': '+=1',
+    '--': '-=1',
+    'helm': 'match',
+    'chest': 'case',
+    'dagger': 'case _'
 }
 
 def nth_repl(s, sub, repl, n):
