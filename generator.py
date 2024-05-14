@@ -12,8 +12,8 @@ replacements = {
     'captain': 'def main',
     'fire': 'print',
     'load': 'input',
-    'theo' : 'if',
     'altheo' : 'elif',
+    'theo' : 'if',
     'alt' : 'else',
     'four' :'for',
     'whale' : 'while',
@@ -25,7 +25,7 @@ replacements = {
     'nay' : 'not',
     '{' : ':\n',
     '}' : '',
-    ',' : '\n',
+    # ',' : '\n',
     'home': 'return'
 }
 
@@ -59,15 +59,19 @@ def generate(code):
         if code[i] == "":
             continue
         
-        if len(code[i].split()) > 1: firstWord = code[i].split()[0]
-        else: firstWord = ""
-
+        firstWord = code[i].split()[0] if len(code[i].split()) > 1 else ""
+        
         for key in replacements.keys():
             code[i] = code[i].replace(key, replacements[key])
 
-        if firstWord in ['pint', 'fleet', 'doffy', 'bull']:
+        if firstWord in ['pint', 'fleet', 'doffy', 'bull', 'void']:
             if "()" in code[i].split()[1]:  # Function statement    
                 code[i] = code[i].replace(firstWord, 'def')
+                parameters = re.findall(r'\(.*?\)', code[i])
+                if len(parameters) > 0:
+                    if "fleet" in parameters: code[i] = code[i].replace("fleet", "")
+                    if "doffy" in parameters: code[i] = code[i].replace("doffy", "")
+                    if "bull" in parameters: code[i] = code[i].replace("bull", "")
             else:  # Variable statement
                 length = len(code[i].split())
                 afterType = " ".join(code[i].split()[1:])
@@ -75,6 +79,7 @@ def generate(code):
                 # code[i]=replacenth(code[i], afterType, "", 2)
                 code[i] = nth_repl(code[i], afterType, "", 2)
 
+        
         # Application of TAC in Expressions
         if 'fire' in code[i]: #Detection of fire
             expression = code[i].split('fire ')[1] #If there is Fire, extraction of expression will happen
@@ -105,7 +110,7 @@ def generate(code):
     for var, expression in temp_vars.items():
         pyfile.write(f'{var} = {expression}\n')
 
-    pyfile.write("if __name__ == '__main__':\n    main()")
+    pyfile.write("\nif __name__ == '__main__':\n    main()")
     pyfile.close()
 
     os.system(f"python -u \"{os.getcwd()}\generatedCode.py\" > \"{os.getcwd()}\output.txt\"")
