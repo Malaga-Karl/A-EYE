@@ -28,7 +28,6 @@ def analyze_code():
     if errors:
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n")
-            terminal_text.tag_configure(foreground="light red")
     else:
         terminal_text.insert(tk.END, "Lexical analysis successful" + "\n")
         terminal_text.config(state="disabled")
@@ -52,14 +51,13 @@ def analyze_syntax():
         return
     result, errors = lexer.analyze_text(code)
     if not errors:
-        syntax_result = syntax.analyze_syntax(result)  
+        syntax_result = syntax.analyze_syntax(result)
 
     terminal_text.config(state="normal")
     terminal_text.delete("1.0", "end")
     if errors:
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n")
-            terminal_text.tag_configure(foreground="light red")
         terminal_text.config(state="disabled")
     else:
         terminal_text.insert(tk.END, syntax_result + "\n")
@@ -90,10 +88,9 @@ def analyze_semantics():
     terminal_text.delete("1.0", "end")
     
     if errors:
-        # Display lexical errors in light red
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n", "error")
-        terminal_text.tag_configure("error", foreground="light red")
+        terminal_text.tag_configure("error", foreground="red")
         terminal_text.config(state="disabled")
         return False, result, errors
     
@@ -105,7 +102,7 @@ def analyze_semantics():
         terminal_text.tag_configure("success", foreground="light green")
     else:
         terminal_text.insert(tk.END, syntax_result + "\n", "error")
-        terminal_text.tag_configure("error", foreground="light red")
+        terminal_text.tag_configure("error", foreground="red")
         terminal_text.config(state="disabled")
         return False, result, [syntax_result]
         
@@ -114,7 +111,7 @@ def analyze_semantics():
         terminal_text.tag_configure("success", foreground="light green")
     else:
         terminal_text.insert(tk.END, semantics_result + "\n", "error")
-        terminal_text.tag_configure("error", foreground="light red")
+        terminal_text.tag_configure("error", foreground="red")
         terminal_text.config(state="disabled")
         return False, result, [semantics_result]
     
