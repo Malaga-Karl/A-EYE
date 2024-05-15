@@ -1,11 +1,10 @@
 def main():
-    full = 100; 
-    current = 50; 
-    for i in range(0, 6, 1):
-        for j in range(0, i+1, 1): #SingleLine
-            print(j); 
-        
-        print("i"); 
+    a = 10; 
+    b = 12; 
+    c = 13; 
+    d = a + b + c; 
+    if(d == 35):
+        print("Working"); 
     
 
 

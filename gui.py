@@ -52,9 +52,7 @@ def analyze_syntax():
         return
     result, errors = lexer.analyze_text(code)
     if not errors:
-        syntax_result = syntax.analyze_syntax(result)
-        generator.generate(code)
-   
+        syntax_result = syntax.analyze_syntax(result)  
 
     terminal_text.config(state="normal")
     terminal_text.delete("1.0", "end")
@@ -64,9 +62,7 @@ def analyze_syntax():
             terminal_text.tag_configure(foreground="light red")
         terminal_text.config(state="disabled")
     else:
-        output = open("output.txt", "r")
         terminal_text.insert(tk.END, syntax_result + "\n")
-        terminal_text.insert(tk.END, output.read() + "\n")
         terminal_text.config(state="disabled")
         if syntax_result == "Syntax analysis successful":
             terminal_text.tag_configure("success", foreground="light green")
@@ -97,7 +93,7 @@ def analyze_semantics():
         # Display lexical errors in light red
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n", "error")
-        terminal_text.tag_configure("error", foreground="#light red")
+        terminal_text.tag_configure("error", foreground="light red")
         terminal_text.config(state="disabled")
         return False, result, errors
     
@@ -109,7 +105,7 @@ def analyze_semantics():
         terminal_text.tag_configure("success", foreground="light green")
     else:
         terminal_text.insert(tk.END, syntax_result + "\n", "error")
-        terminal_text.tag_configure("error", foreground="#light red")
+        terminal_text.tag_configure("error", foreground="light red")
         terminal_text.config(state="disabled")
         return False, result, [syntax_result]
         
@@ -118,7 +114,7 @@ def analyze_semantics():
         terminal_text.tag_configure("success", foreground="light green")
     else:
         terminal_text.insert(tk.END, semantics_result + "\n", "error")
-        terminal_text.tag_configure("error", foreground="#light red")
+        terminal_text.tag_configure("error", foreground="light red")
         terminal_text.config(state="disabled")
         return False, result, [semantics_result]
     
@@ -522,7 +518,7 @@ btn_redo.bind("<Enter>", on_enter)
 
 #Colored Reserve Words
 def update_text_color(event=None):
-    reserved_words = ["onboard", "offboard", "captain", "pint", "fleet", "bull", "doffy", "loyal", "fire", "load", "len", "theo", "alt", "althea", "helm", "chest", "dagger", "four", "whale", "real", "usopp", "and", "oro", "nay", "leak", "sail", "anchor", "pass", "void", "home"]
+    reserved_words = ["onboard", "offboard", "captain", "pint", "fleet", "bull", "doffy", "loyal", "fire", "load", "len", "theo", "alt", "altheo", "helm", "chest", "dagger", "four", "whale", "real", "usopp", "and", "oro", "nay", "leak", "sail", "anchor", "pass", "void", "home"]
 
     text_widget.tag_remove("reserved_words", "1.0", "end")
     text_widget.tag_remove("brackets", "1.0", "end")
