@@ -66,11 +66,12 @@ def remove_dtye(line):
 
 def generate(code):
     # Split code by lines
-    code = code.split("\n")
+    code = [line.strip() for line in code.split("\n")]
     pyfile = open("generatedCode.py", "w")
     firstLine = code.index("onboard") + 1
     lastLine = code.index("offboard")
-
+    activeBrackets = 0
+   
     inside_comment = False
     
     # Temporary variable counter: will start the count in t1 
@@ -79,7 +80,10 @@ def generate(code):
 
     # Iterate through lines
     for i in range(firstLine, lastLine):
+        hadOBracket = False
+        hadCBracket = False
         line = code[i]
+        # line = line.strip()
         if line == "":
             continue
         
@@ -100,6 +104,14 @@ def generate(code):
             code[i] = code[i].split('#')[0]  # Remove the comment part
             code[i] = code[i].rstrip()  # Remove trailing whitespace
 
+
+        # Check for brackets
+        if '{' in line:
+            hadOBracket = True
+        if '}' in line:
+            activeBrackets -= 1
+        
+
         firstWord = line.split()[0] if len(line.split()) > 1 else ""
         
         for key in statement_replacements.keys():
@@ -116,13 +128,7 @@ def generate(code):
                     if "bull" in parameters: line = line.replace("bull ", "")
             else:
                 line = line.replace(firstWord, '')
-            # else:  # Variable statement
-            #     length = len(line.split())
-            #     afterType = " ".join(line.split()[1:])        
-            #     line = line.replace(firstWord, afterType)
-            #     # line=replacenth(line, afterType, "", 2)
-            #     line = nth_repl(line, afterType, "", 2)
-        
+    
         if 'four(' in line:
             in_for = re.findall(r'\(.*?\)', line)
             in_for_no_parenthesis = str(in_for[0].replace('(', '').replace(')', ''))
@@ -144,53 +150,17 @@ def generate(code):
             else:
                 starting_point = ending_point
             
-
-
-
-            # # if '++' in in_for[2]:
-            # #     step = 1
-            # # elif '--' in in_for[2]:
-            # #     step = -1
             step = 1
             line = line.replace(in_for[0], f' {variable} in range({starting_point}, {ending_point}, {step})')
+
         for key in statement_replacements.keys():
             line = line.replace(key, statement_replacements[key])
         
-        # for( i = 5; i <= 5; i++)
-        # i = 5
-        # i <= 5
-        # i ++
-        #  i = 5
-            
-        # Application of TAC in Expressions
-        # if 'fire' in line: #Detection of fire
-        #     expression = line.split('fire ')[1] #If there is Fire, extraction of expression will happen
-        #     terms = expression.split() #Tokenization
-        #     result_var = terms[0] #First Term in expression represents the variable
-        #     new_expression = '' #Starting Point of Constant Replacement
-        #     for term in terms[1:]:
-        #         if term in replacements:
-        #             new_expression += replacements[term] + ' '
-        #         else:
-        #             new_expression += term + ' '
-        #     temp_var = f't{temp_var_counter}' #Hold intermiate result
-        #     temp_vars[temp_var] = new_expression #Replacemnrs
-        #     line = f'{temp_var} = {new_expression}\n' #Assignment of value
-        #     code.insert(i + 1, f'fire {result_var} {temp_var}\n')
-        #     temp_var_counter += 1 #Increment
-            
-        # Example: 
-        # fire (a + b * c / a) will be converted to:
-        # t1 = c / a
-        # t2 = b * t1
-        # t3 = a + t2
-        # fire t3
-
-        pyfile.write(line + '\n')
-
-    # # Out the Temporary Used Variables 
-    # for var, expression in temp_vars.items():
-    #     pyfile.write(f'{var} = {expression}\n')
+       
+        pyfile.write(('\t'*activeBrackets) + line + '\n')
+        if hadOBracket:
+            activeBrackets += 1
+        
 
     pyfile.write("\nif __name__ == '__main__':\n    main()")
     pyfile.close()

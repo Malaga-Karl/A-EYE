@@ -1,0 +1,17 @@
+onboard
+captain(){
+four(pint a = 0; a < 10; a++){
+    fire(a);
+}
+}
+offboard
+
+ab = 1
+
+onboard
+captain(){
+
+
+
+code
+main:

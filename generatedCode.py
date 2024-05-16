@@ -1,7 +1,5 @@
 def main():
-    for a in range(10, 0, 1):
-        print(a); 
-    
+	print(len("hellllloooo")); 
 
 
 if __name__ == '__main__':
