@@ -1,5 +1,5 @@
 def main():
-	fire("a++ fire theo whale"); 
+	print("a++ fire four whale theo"); 
 
 
 if __name__ == '__main__':

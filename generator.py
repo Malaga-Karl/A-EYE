@@ -42,14 +42,10 @@ statement_replacements = {
 
 def nth_repl(s, sub, repl, n):
     find = s.find(sub)
-    # If find is not -1 we have found at least one match for the substring
     i = find != -1
-    # loop util we find the nth or we find no match
     while find != -1 and i != n:
-        # find + 1 means we start searching from after the last match
         find = s.find(sub, find + 1)
         i += 1
-    # If i is equal to n we found nth match so replace
     if i == n:
         return s[:find] + repl + s[find+len(sub):]
     return s
@@ -72,7 +68,7 @@ def generate(code):
     firstLine = code.index("onboard") + 1
     lastLine = code.index("offboard")
     activeBrackets = 0
-
+    quotes = 0
     
    
     inside_comment = False
@@ -80,17 +76,11 @@ def generate(code):
     # Temporary variable counter: will start the count in t1 
     # temp_var_counter = 1
     # temp_vars = {}
-
     # Iterate through lines
     for i in range(firstLine, lastLine):
-        
         hadOBracket = False
         line = code[i]
-        inquotes = re.findall(r'\".*?\"', line)
-        instring = inquotes[0].replace("\"", "") if len(inquotes) > 0 else ""
         
-        # instring[0] = instring[0].replace("\"", "")
-        # line = line.strip()
         if line == "":
             continue
         
@@ -110,7 +100,7 @@ def generate(code):
         if '#' in code[i]:
             code[i] = code[i].split('#')[0]  # Remove the comment part
             code[i] = code[i].rstrip()  # Remove trailing whitespace
-
+            
 
         # Check for brackets
         if '{' in line:
@@ -160,16 +150,18 @@ def generate(code):
             step = 1
             line = line.replace(in_for[0], f' {variable} in range({starting_point}, {ending_point}, {step})')
 
+
         for key in statement_replacements.keys():
-            if len(inquotes) > 0:
-                if key in inquotes[0]:
-                      line = line.replace(key, key)
-                else:
-                    line = line.replace(key, statement_replacements[key])
+            if "\"" in line:
+                first_quote = line.find("\"") + 1
+                last_quote = line.rfind("\"")
+                prequote_substring = line[:first_quote]
+                postquote_substring = line[last_quote:]
+                line = prequote_substring.replace(key, statement_replacements[key]) + line[first_quote:last_quote] + postquote_substring.replace(key, statement_replacements[key])
             else:
                 line = line.replace(key, statement_replacements[key])
-    
-        pyfile.write(('\t'*activeBrackets) + line  +'\n')
+
+        pyfile.write(('\t'*activeBrackets) + line +'\n')
    
         if hadOBracket:
             activeBrackets += 1
