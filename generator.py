@@ -36,7 +36,8 @@ statement_replacements = {
     '--': '-=1',
     'helm': 'match',
     'chest': 'case',
-    'dagger': 'case _'
+    'dagger': 'case _',
+    'void'  : 'def'
 }
 
 def nth_repl(s, sub, repl, n):
@@ -71,6 +72,8 @@ def generate(code):
     firstLine = code.index("onboard") + 1
     lastLine = code.index("offboard")
     activeBrackets = 0
+
+    
    
     inside_comment = False
     
@@ -80,9 +83,13 @@ def generate(code):
 
     # Iterate through lines
     for i in range(firstLine, lastLine):
+        
         hadOBracket = False
-        hadCBracket = False
         line = code[i]
+        inquotes = re.findall(r'\".*?\"', line)
+        instring = inquotes[0].replace("\"", "") if len(inquotes) > 0 else ""
+        
+        # instring[0] = instring[0].replace("\"", "")
         # line = line.strip()
         if line == "":
             continue
@@ -114,20 +121,20 @@ def generate(code):
 
         firstWord = line.split()[0] if len(line.split()) > 1 else ""
         
-        for key in statement_replacements.keys():
-            code[i] = code[i].replace(key, statement_replacements[key])
+        # for key in statement_replacements.keys():
+        #     code[i] = code[i].replace(key, statement_replacements[key])
             
         if firstWord in ['pint', 'fleet', 'doffy', 'bull', 'void']:
             firstWord = firstWord + ' '
             if "()" in line.split()[1]:  # Function statement    
                 line = line.replace(firstWord, 'def ')
                 parameters = re.findall(r'\(.*?\)', line)
-                if len(parameters) > 0:
-                    if "fleet" in parameters: line = line.replace("fleet ", "")
-                    if "doffy" in parameters: line = line.replace("doffy ", "")
-                    if "bull" in parameters: line = line.replace("bull ", "")
-            else:
-                line = line.replace(firstWord, '')
+            #     if len(parameters) > 0:
+            #         if "fleet" in parameters: line = line.replace("fleet ", "")
+            #         if "doffy" in parameters: line = line.replace("doffy ", "")
+            #         if "bull" in parameters: line = line.replace("bull ", "")
+            # else:
+            #     line = line.replace(firstWord, '')
     
         if 'four(' in line:
             in_for = re.findall(r'\(.*?\)', line)
@@ -154,10 +161,16 @@ def generate(code):
             line = line.replace(in_for[0], f' {variable} in range({starting_point}, {ending_point}, {step})')
 
         for key in statement_replacements.keys():
-            line = line.replace(key, statement_replacements[key])
-        
-       
-        pyfile.write(('\t'*activeBrackets) + line + '\n')
+            if len(inquotes) > 0:
+                if key in inquotes[0]:
+                      line = line.replace(key, key)
+                else:
+                    line = line.replace(key, statement_replacements[key])
+            else:
+                line = line.replace(key, statement_replacements[key])
+    
+        pyfile.write(('\t'*activeBrackets) + line  +'\n')
+   
         if hadOBracket:
             activeBrackets += 1
         
