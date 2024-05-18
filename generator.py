@@ -69,8 +69,9 @@ def generate(code):
     firstLine = code.index("onboard") + 1
     lastLine = code.index("offboard")
     activeBrackets = 0
-    quotes = 0
     inside_comment = False
+    inside_ForLoop = False
+    for_iteration = 0
 
     variables = {}
     
@@ -107,7 +108,11 @@ def generate(code):
         if '{' in line:
             hadOBracket = True
         if '}' in line:
-            activeBrackets -= 1
+            if inside_ForLoop:
+                activeBrackets -=2
+                inside_ForLoop = False
+            else:
+                activeBrackets -= 1
         
 
         firstWord = line.split()[0] if len(line.split()) > 1 else ""
@@ -137,33 +142,41 @@ def generate(code):
                 if letter == ',' and not isParam:
                     line = line.replace(letter, "; ", 1)
             
-                
+   
+
                 
 
         if 'four' in line:
+            for_iteration = 0
             in_for = re.findall(r'\(.*?\)', line)
             in_for_no_parenthesis = str(in_for[0].replace('(', '').replace(')', ''))
             in_for_no_parenthesis = str("".join(in_for_no_parenthesis))
             in_for_no_parenthesis = remove_dtye(in_for_no_parenthesis)
             in_for_split = in_for_no_parenthesis.split(';')
 
-           
             variable = in_for_split[0].split()[0]
             var_value = in_for_split[0].split()[2]
             ending_point = in_for_split[1].split()[2]
             condition = in_for_split[1].replace(variable, var_value)
-            if eval(condition):
-                    starting_point = var_value
-                    if ending_point.isnumeric():
-                        ending_point = ending_point if '=' not in condition else str(int(ending_point) + 1)
-                    else:
-                        ending_point = ending_point if '=' not in condition else str(ending_point + "+1")
-            else:
-                starting_point = ending_point
+            step = in_for_split[2].split()[0]
+            if '++' in step:
+                step = 1
+            print(step)
+            # condition = condition.replace(ending_point, variables[ending_point]) if not ending_point.isnumeric() else condition.replace(ending_point, ending_point)
             
-            step = 1
+            line = f'theo({condition})' + '{\n' + ('\t' * (activeBrackets + 1)) + line + '}'
+            # if eval(condition):
+            starting_point = var_value
+            if ending_point.isnumeric():
+                ending_point = ending_point if '=' not in condition else str(int(ending_point) + 1)
+            else:
+                ending_point = ending_point if '=' not in condition else str(ending_point + "+1")
+            # else:
+            #     starting_point = ending_point
+            
             line = line.replace(in_for[0], f' {variable} in range({starting_point}, {ending_point}, {step})')
-
+            inside_ForLoop = True
+            
 
         for key in statement_replacements.keys():
             if "\"" in line:
@@ -175,8 +188,21 @@ def generate(code):
             else:
                 line = line.replace(key, statement_replacements[key])
 
+        if '=' in line:
+            decl = [item.strip() for item in line.split(";") if item != '']
+
+            for item in decl:
+                if '=' in item:
+                    declare = item.split("=")
+                    variables[declare[0].strip()] = declare[1].strip()
+            
         pyfile.write(('\t'*activeBrackets) + line +'\n')
-   
+        print(variables)
+            
+        if inside_ForLoop:
+            if for_iteration == 0:
+                activeBrackets += 1
+            for_iteration += 1
         if hadOBracket:
             activeBrackets += 1
         
