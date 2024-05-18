@@ -37,7 +37,8 @@ statement_replacements = {
     'helm': 'match',
     'chest': 'case',
     'dagger': 'case _',
-    'void'  : 'def'
+    'void'  : 'def',
+    'loyal': ''
 }
 
 def nth_repl(s, sub, repl, n):
@@ -69,9 +70,9 @@ def generate(code):
     lastLine = code.index("offboard")
     activeBrackets = 0
     quotes = 0
-    
-   
     inside_comment = False
+
+    variables = {}
     
     # Temporary variable counter: will start the count in t1 
     # temp_var_counter = 1
@@ -111,22 +112,35 @@ def generate(code):
 
         firstWord = line.split()[0] if len(line.split()) > 1 else ""
         
-        # for key in statement_replacements.keys():
-        #     code[i] = code[i].replace(key, statement_replacements[key])
-            
+
+
         if firstWord in ['pint', 'fleet', 'doffy', 'bull', 'void']:
-            firstWord = firstWord + ' '
-            if "()" in line.split()[1]:  # Function statement    
-                line = line.replace(firstWord, 'def ')
-                parameters = re.findall(r'\(.*?\)', line)
-            #     if len(parameters) > 0:
-            #         if "fleet" in parameters: line = line.replace("fleet ", "")
-            #         if "doffy" in parameters: line = line.replace("doffy ", "")
-            #         if "bull" in parameters: line = line.replace("bull ", "")
-            # else:
-            #     line = line.replace(firstWord, '')
-    
-        if 'four(' in line:
+            secondWord = line.split()[1]
+            if '(' in secondWord:
+                words = line.split()
+                words[0] = 'def'
+                line = ' '.join(words)
+            else:
+                thirdWord = line.split()[2]
+                if '(' in thirdWord:
+                    words = line.split()
+                    words[0] = 'def'
+                    line = ' '.join(words)
+
+        if ',' in line:
+            isParam = False
+            for letter in line:
+                if letter == '(':
+                    isParam = True
+                if letter == ')':
+                    isParam = False
+                if letter == ',' and not isParam:
+                    line = line.replace(letter, "; ", 1)
+            
+                
+                
+
+        if 'four' in line:
             in_for = re.findall(r'\(.*?\)', line)
             in_for_no_parenthesis = str(in_for[0].replace('(', '').replace(')', ''))
             in_for_no_parenthesis = str("".join(in_for_no_parenthesis))
