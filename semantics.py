@@ -267,9 +267,7 @@ class SemanticAnalyzer:
 #     Token(4, '{', '{'),
 #     Token(5, 'IDENTIFIER', 'g'),
 #     Token(5, '=', '='),
-#     Token(5, 'FLEET LIT', '2.2'),
-#     Token(5, '-', '-'),
-#     Token(5, 'DOFFY LIT', 'HELLO WORLD'),
+#     Token(5, 'PINT LIT', '2'),
 #     Token(5, ';', ';'),
 #     Token(6, '}', '}'),
 #     Token(7, 'OFFBOARD', 'offboard')
