@@ -1,5 +1,10 @@
+def add(a, b):
+	return(a+b); 
+
 def main():
-	print("a++ fire four whale theo"); 
+	c = 1;   d = 5;   e = add(c,d); 
+	banana = "banana!"; 
+	print(e); 
 
 
 if __name__ == '__main__':

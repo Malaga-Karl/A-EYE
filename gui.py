@@ -41,6 +41,7 @@ def analyze_code():
     for token in result:
         row = [str(token.line_number), token.value if token.value else "", token.type]
         table.insert("", "end", values=row)
+        print(token)
 
     terminal_text.config(state="disabled")
 
