@@ -152,21 +152,21 @@ def generate(code):
             in_for_no_parenthesis = str(in_for[0].replace('(', '').replace(')', ''))
             in_for_no_parenthesis = str("".join(in_for_no_parenthesis))
             in_for_no_parenthesis = remove_dtye(in_for_no_parenthesis)
-            in_for_split = in_for_no_parenthesis.split(';')
+            in_for_split = [item.strip() for item in in_for_no_parenthesis.split(';')]
 
-            variable = in_for_split[0].split()[0]
-            var_value = in_for_split[0].split()[2]
-            ending_point = in_for_split[1].split()[2]
-            condition = in_for_split[1].replace(variable, var_value)
-            step = in_for_split[2].split()[0]
-            if '++' in step:
+            fordecl = in_for_split[0]
+            starting_point = fordecl.split('=')[1].strip()
+            variable = fordecl.split('=')[0].strip()
+
+            condition = in_for_split[1]
+
+            update = in_for_split[2]
+            if '++' in update:
                 step = 1
-            print(step)
-            # condition = condition.replace(ending_point, variables[ending_point]) if not ending_point.isnumeric() else condition.replace(ending_point, ending_point)
+            
+            print(in_for_split)
             
             line = f'theo({condition})' + '{\n' + ('\t' * (activeBrackets + 1)) + line + '}'
-            # if eval(condition):
-            starting_point = var_value
             if ending_point.isnumeric():
                 ending_point = ending_point if '=' not in condition else str(int(ending_point) + 1)
             else:
