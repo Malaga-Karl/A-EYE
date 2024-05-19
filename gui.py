@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import lexer
 import syntax
-import semantics
+import test_semantics
 import imageio
 import threading
 import time
@@ -95,7 +95,7 @@ def analyze_semantics():
         return False, result, errors
     
     syntax_result = syntax.analyze_syntax(result)
-    semantics_result = semantics.analyze(result)
+    semantics_result = test_semantics.analyze_sem(result)
     
     if syntax_result == "Syntax analysis successful":
         terminal_text.insert(tk.END, syntax_result + "\n", "success")

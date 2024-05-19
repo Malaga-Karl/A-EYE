@@ -41,13 +41,12 @@ class SemanticAnalyzer:
                 self.handle_alt_conditional(line_tokens, line_number)
             elif line_type == "HELM_SWITCH":
                 self.handle_helm_switch(line_tokens, line_number)
-            print(f"Line {line_number} has type: {line_type}")
-        print(self.symbol_table)
+        #     print(f"Line {line_number} has type: {line_type}")
+        # print(self.symbol_table)
         if self.errors:
-            for error in self.errors:
-                print(error)
-        else:
-            print("Semantic analysis successful")
+            return self.errors
+        # else:
+        #     print("Semantic analysis successful")
 
     def filter_tokens(self, tokens):
         filtered_tokens = []
