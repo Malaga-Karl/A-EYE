@@ -525,7 +525,7 @@ btn_redo.bind("<Enter>", on_enter)
 
 #Colored Reserve Words
 def update_text_color(event=None):
-    reserved_words = ["onboard", "offboard", "captain", "pint", "fleet", "bull", "doffy", "loyal", "fire", "load", "len", "theo", "alt", "althea", "helm", "chest", "dagger", "four", "whale", "real", "usopp", "and", "oro", "nay", "leak", "sail", "anchor", "pass", "void", "home"]
+    reserved_words = ["onboard", "offboard", "captain", "pint", "fleet", "bull", "doffy", "loyal", "fire", "load", "len", "theo", "alt", "altheo", "helm", "chest", "dagger", "four", "whale", "real", "usopp", "and", "oro", "nay", "leak", "sail", "anchor", "pass", "void", "home"]
 
     text_widget.tag_remove("reserved_words", "1.0", "end")
     text_widget.tag_remove("brackets", "1.0", "end")
@@ -553,7 +553,7 @@ def update_text_color(event=None):
             text_widget.tag_add("brackets", start_index, end_index)
 
     # For Quotes
-    quote_pairs = [('"', '"'), ("'", "'")]
+    quote_pairs = [('"', '"')]
     for opening, closing in quote_pairs:
         start_index = "1.0"
         while True:
