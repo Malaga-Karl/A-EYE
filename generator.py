@@ -41,6 +41,23 @@ statement_replacements = {
     'loyal ': ''
 }
 
+def replace_code(line, replacements):
+    # Split the line by keeping the delimiters (string quotes)
+    segments = re.split(r'(\".*?\")', line)
+    new_segments = []
+
+    for segment in segments:
+        if segment.startswith('"') or segment.startswith("'"):
+            # It's a string literal, preserve it as is
+            new_segments.append(segment)
+        else:
+            # Apply replacements on non-string literals
+            for key, value in replacements.items():
+                segment = segment.replace(key, value)
+            new_segments.append(segment)
+
+    return ''.join(new_segments)
+
 def nth_repl(s, sub, repl, n):
     find = s.find(sub)
     i = find != -1
@@ -72,6 +89,7 @@ def generate(code):
     inside_comment = False
     inside_ForLoop = False
     for_iteration = 0
+    global_vars = []
 
     variables = {}
     
@@ -221,16 +239,18 @@ def generate(code):
             inside_ForLoop = True
             
 
-        for key in statement_replacements.keys():
-            if "\"" in line:
-                first_quote = line.find("\"") + 1
-                last_quote = line.rfind("\"")
-                prequote_substring = line[:first_quote]
-                postquote_substring = line[last_quote:]
-                line = prequote_substring.replace(key, statement_replacements[key]) + line[first_quote:last_quote] + postquote_substring.replace(key, statement_replacements[key])
-            else:
-                line = line.replace(key, statement_replacements[key])
+        # for key in statement_replacements.keys():
+        #     if "\"" in line:
+        #         first_quote = line.find("\"") + 1
+        #         last_quote = line.rfind("\"")
+        #         prequote_substring = line[:first_quote]
+        #         postquote_substring = line[last_quote:]
+        #         line = prequote_substring.replace(key, statement_replacements[key]) + line[first_quote:last_quote] + postquote_substring.replace(key, statement_replacements[key])
+        #     else:
+        #         line = line.replace(key, statement_replacements[key])
 
+        line = replace_code(line, statement_replacements)
+        
         if '=' in line:
             decl = [item.strip() for item in line.split(";") if item != '']
 
@@ -238,7 +258,21 @@ def generate(code):
                 if '=' in item:
                     declare = item.split("=")
                     variables[declare[0].strip()] = declare[1].strip()
-            
+        
+        if activeBrackets == 0 and hadOBracket:
+            all_global_vars = []
+            for decl in global_vars:
+                if decl != '':
+                    sep_by_semicolon = [item.strip() for item in decl.split(";") if item != '']
+                    for item in sep_by_semicolon:
+                        if '=' in item and item != '':
+                            declare = item.split("=")
+                            all_global_vars.append(declare[0].strip())
+            print("all global vars: ", all_global_vars)
+            global_statement = ["global " + s for s in all_global_vars]
+            line =  line + '\n\t' + '; '.join(global_statement) + '\n'
+
+
         pyfile.write(('\t'*activeBrackets) + line +'\n')
         print(variables)
             
@@ -249,7 +283,10 @@ def generate(code):
         if hadOBracket:
             activeBrackets += 1
         
-
+        if activeBrackets == 0 and line != "":
+            global_vars.append(line)
+            
+        print("global vars: ", global_vars)
     pyfile.write("\nif __name__ == '__main__':\n    main()")
     pyfile.close()
 

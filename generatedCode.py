@@ -1,11 +1,11 @@
-def main() :
-	full = 100; 
-	current = 50; 
-	if(current/100 < 0.15):
-		print("refuel!"); 
-	else:
-		print("no need"); 
+def main():
 	
+
+	a = 16; 
+	b = 22; 
+	h = 18; 
+	print("Area of Trapezoid:"); 
+	print(((a * b) / 2) * h); 
 
 
 if __name__ == '__main__':
