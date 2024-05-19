@@ -643,8 +643,6 @@ class SyntaxAnalyzer:
     # 74 {IDENTIFIER, real, usopp} fix
     def relational_comp(self):
         if self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET, TT_REAL, TT_USOPP]: 
-            print(self.peek().type)
-            print(self.peek2().type)
             if self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET] and self.peek2() is not None and self.peek2().type not in [TT_REAL, TT_USOPP]: 
                 self.expression()
                 self.comparator()

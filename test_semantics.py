@@ -17,6 +17,8 @@ class SemanticAnalyzer:
             line_type = analyze_line(line_tokens)
             if line_type == "SINGLE_VARIABLE_DECLARATION":
                 self.handle_single_variable_declaration(line_tokens, line_number)
+            elif line_type == "LOYAL_DECLARATION":
+                self.handle_loyal_declaration(line_tokens, line_number)
             elif line_type == "MULTIPLE_VARIABLE_DECLARATION":
                 self.handle_multiple_variable_declaration(line_tokens, line_number)
             elif line_type == "VARIABLE_ASSIGNMENT":
@@ -41,8 +43,10 @@ class SemanticAnalyzer:
                 self.handle_alt_conditional(line_tokens, line_number)
             elif line_type == "HELM_SWITCH":
                 self.handle_helm_switch(line_tokens, line_number)
-        #     print(f"Line {line_number} has type: {line_type}")
-        # print(self.symbol_table)
+            elif line_type == "FIRE_STATEMENT":
+                self.handle_fire_statement(line_tokens, line_number)
+            print(f"Line {line_number} has type: {line_type}")
+        print(self.symbol_table)
         if self.errors:
             return self.errors
         # else:
@@ -59,6 +63,32 @@ class SemanticAnalyzer:
             if token.type == TT_OFFBOARD:
                 break
         return [token for token in filtered_tokens if token.type not in [TT_SLCOMMENT, TT_MLCOMMENT]]
+    
+    def handle_loyal_declaration(self, line_tokens, line_number):
+        variable_type = line_tokens[1].type
+        variable_name = line_tokens[2].value
+        expression_tokens = line_tokens[4:-1]
+
+        if variable_name in self.symbol_table[-1]:
+            self.errors.append(f"Redeclaration Error: Variable '{variable_name}' is already declared. (line {line_number})")
+            return
+
+        expression_type = self.evaluate_expression_type(expression_tokens)
+        if not self.is_type_compatible(variable_type, expression_type):
+            if expression_type is None:
+                self.errors.append(f"Type Mismatch in Expression: Expecting {variable_type}, double check the expression. (line {line_number})")
+            else:
+                self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the assigned expression is of type {expression_type}. (line {line_number})")
+        else:
+            self.symbol_table[-1][variable_name] = {"type": variable_type, "function": False, "loyal": True}
+
+    def handle_fire_statement(self, line_tokens, line_number):
+        expression_tokens = line_tokens[1:-1]
+
+        for token in expression_tokens:
+            if token.type == TT_IDTFR:
+                if not self.is_variable_declared(token.value):
+                    self.errors.append(f"Undeclared Variable Error: Variable '{token.value}' is not declared. (line {line_number})")
 
     def handle_single_variable_declaration(self, line_tokens, line_number):
         variable_name = line_tokens[1].value
@@ -66,15 +96,58 @@ class SemanticAnalyzer:
         if variable_name in self.symbol_table[-1]:
             self.errors.append(f"Redeclaration Error: Variable '{variable_name}' is already declared. (line {line_number})")
         else:
-            expression_tokens = line_tokens[3:-1] 
-            expression_type = self.evaluate_expression_type(expression_tokens)
-            if not self.is_type_compatible(variable_type, expression_type):
-                if expression_type == None:
-                    self.errors.append(f"Type Mismatch in Expression: Expectiong {variable_type}, double check the expression. (line {line_number})")
+            expression_tokens = line_tokens[3:-1]
+            if len(expression_tokens) > 2 and expression_tokens[1].type == TT_LPAREN:
+                function_name = expression_tokens[0].value
+                if function_name == "load":
+                    expected_params = [TT_DOFFY_LIT]
+                    given_params = [expression_tokens[2].type]
+                    function_return_type = variable_type
+                elif function_name == "len":
+                    expected_params = [TT_DOFFY_LIT]
+                    given_params = [expression_tokens[2].type]
+                    function_return_type = "PINT"
                 else:
-                    self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the assigned expression is of type {expression_type}. (line {line_number})")
+                    if function_name not in self.function_signatures:
+                        self.errors.append(f"Undeclared Function Error: Function '{function_name}' is not declared. (line {line_number})")
+                        return
+                    expected_params = self.function_signatures[function_name]
+                    i = 2
+                    given_params = []
+                    while expression_tokens[i].type != TT_RPAREN:
+                        if expression_tokens[i].type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_IDTFR]:
+                            param_value = expression_tokens[i]
+                            if param_value.type == TT_IDTFR:
+                                param_type = self.get_variable_type(param_value.value)
+                                if param_type is None:
+                                    self.errors.append(f"Undeclared Variable Error: Variable '{param_value.value}' is not declared. (line {line_number})")
+                                    return
+                            else:
+                                param_type = param_value.type
+                            given_params.append(param_type)
+                        i += 1
+                    if len(given_params) != len(expected_params):
+                        self.errors.append(f"Parameter Error: Function '{function_name}' expected {len(expected_params)} parameters but got {len(given_params)}. (line {line_number})")
+                        return
+                    for expected, given in zip(expected_params, given_params):
+                        if not self.is_type_compatible(expected, given):
+                            self.errors.append(f"Type Error: Function '{function_name}' expected parameter of type {expected} but got {given}. (line {line_number})")
+                            return
+                    function_return_type = self.symbol_table[0][function_name]["return_type"]
+
+                if not self.is_type_compatible(variable_type, function_return_type):
+                    self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the function '{function_name}' returns type {function_return_type}. (line {line_number})")
+                else:
+                    self.symbol_table[-1][variable_name] = {"type": variable_type, "function": False}
             else:
-                self.symbol_table[-1][variable_name] = {"type": variable_type, "function": False}
+                expression_type = self.evaluate_expression_type(expression_tokens)
+                if not self.is_type_compatible(variable_type, expression_type):
+                    if expression_type is None:
+                        self.errors.append(f"Type Mismatch in Expression: Expecting {variable_type}, double check the expression. (line {line_number})")
+                    else:
+                        self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the assigned expression is of type {expression_type}. (line {line_number})")
+                else:
+                    self.symbol_table[-1][variable_name] = {"type": variable_type, "function": False}
 
     def is_type_compatible(self, expected_type, actual_type):
         if expected_type == actual_type:
@@ -91,29 +164,70 @@ class SemanticAnalyzer:
 
     def handle_multiple_variable_declaration(self, line_tokens, line_number):
         variable_type = line_tokens[0].type
-        i = 2
+        i = 1  
         while i < len(line_tokens):
-            if line_tokens[i].type == TT_ASSIGN:
-                variable_name = line_tokens[i - 1].value
+            if line_tokens[i].type == TT_IDTFR: 
+                variable_name = line_tokens[i].value
                 if variable_name in self.symbol_table[-1]:
                     self.errors.append(f"Redeclaration Error: Variable '{variable_name}' is already declared. (line {line_number})")
+                    return
+                if i + 1 < len(line_tokens) and line_tokens[i + 1].type == TT_ASSIGN:
+                    expression_tokens = []
+                    function_return_type = variable_type
+                    i += 2 
+                    while i < len(line_tokens) and line_tokens[i].type != TT_COMMA and line_tokens[i].type != TT_SMCLN:
+                        expression_tokens.append(line_tokens[i])
+                        i += 1
+                    if expression_tokens[0].type == TT_LOAD or expression_tokens[0].type == TT_LEN:
+                        function_name = expression_tokens[0].value
+                        if function_name == "load":
+                            expected_params = [TT_DOFFY_LIT]
+                            given_params = [expression_tokens[2].type]
+                            function_return_type = variable_type
+                            print("here")
+                        elif function_name == "len":
+                            expected_params = [TT_DOFFY_LIT]
+                            given_params = [expression_tokens[2].type]
+                            function_return_type = "PINT"
+                        else:
+                            self.errors.append(f"Undeclared Function Error: Function '{function_name}' is not declared. (line {line_number})")
+                            return
+                    else:
+                        expression_type = self.evaluate_expression_type(expression_tokens)
+                        if not self.is_type_compatible(variable_type, expression_type):
+                            if expression_type is None:
+                                self.errors.append(f"Type Mismatch in Expression: Expecting {variable_type}, double check the expression. (line {line_number})")
+                            else:
+                                self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the assigned expression is of type {expression_type}. (line {line_number})")
+                            return
+                    if not self.is_type_compatible(variable_type, function_return_type):
+                        self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the function '{function_name}' returns type {function_return_type}. (line {line_number})")
+                    else:
+                        self.symbol_table[-1][variable_name] = {"type": variable_type, "function": False}
                 else:
                     self.symbol_table[-1][variable_name] = {"type": variable_type, "function": False}
+                    i += 1
             i += 1
 
     def handle_variable_assignment(self, line_tokens, line_number):
         variable_name = line_tokens[0].value
         if not self.is_variable_declared(variable_name):
             self.errors.append(f"Undeclared Variable Error: Variable '{variable_name}' is not declared. (line {line_number})")
-        else:
-            expression_tokens = line_tokens[2:-1]  
-            variable_type = self.get_variable_type(variable_name)
-            expression_type = self.evaluate_expression_type(expression_tokens)
-            if not self.is_type_compatible(variable_type, expression_type):
-                if expression_type == None:
-                    self.errors.append(f"Type Mismatch in Expression: Expecting {variable_type}, double check the expression. (line {line_number})")
-                else:
-                    self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the assigned expression is of type {expression_type}. (line {line_number})")
+            return
+
+        variable_info = self.get_variable_info(variable_name)
+        if variable_info.get("loyal"):
+            self.errors.append(f"Constant Modification Error: Variable '{variable_name}' is a constant and cannot be modified. (line {line_number})")
+            return
+
+        expression_tokens = line_tokens[2:-1]
+        expression_type = self.evaluate_expression_type(expression_tokens)
+        if not self.is_type_compatible(variable_info["type"], expression_type):
+            if expression_type is None:
+                self.errors.append(f"Type Mismatch in Expression: Expecting {variable_info['type']}, double check the expression. (line {line_number})")
+            else:
+                self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_info['type']}, but the assigned expression is of type {expression_type}. (line {line_number})")
+
 
     def handle_variable_assignment_with_function_call(self, line_tokens, line_number):
         variable_name = line_tokens[0].value
@@ -121,32 +235,42 @@ class SemanticAnalyzer:
         if not self.is_variable_declared(variable_name):
             self.errors.append(f"Undeclared Variable Error: Variable '{variable_name}' is not declared. (line {line_number})")
             return
-        if function_name not in self.function_signatures:
-            self.errors.append(f"Undeclared Function Error: Function '{function_name}' is not declared. (line {line_number})")
-            return
-
-        expected_params = self.function_signatures[function_name]
-        i = 4
-        given_params = []
-        while line_tokens[i].type != TT_RPAREN:
-            if line_tokens[i].type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_IDTFR]:
-                param_value = line_tokens[i]
-                if param_value.type == TT_IDTFR:
-                    param_type = self.get_variable_type(param_value.value)
-                    if param_type is None:
-                        self.errors.append(f"Undeclared Variable Error: Variable '{param_value.value}' is not declared. (line {line_number})")
-                else:
-                    param_type = param_value.type
-                given_params.append(param_type)
-            i += 1
-
-        if len(given_params) != len(expected_params):
-            self.errors.append(f"Parameter Error: Function '{function_name}' expected {len(expected_params)} parameters but got {len(given_params)}. (line {line_number})")
+        if function_name == "load":
+            expected_params = [TT_STRING_LIT]
+            given_params = [line_tokens[4].type]
+            function_return_type = "PINT"
+        elif function_name == "len":
+            expected_params = [TT_STRING_LIT]
+            given_params = [line_tokens[4].type]
+            function_return_type = "PINT"
         else:
+            if function_name not in self.function_signatures:
+                self.errors.append(f"Undeclared Function Error: Function '{function_name}' is not declared. (line {line_number})")
+                return
+            expected_params = self.function_signatures[function_name]
+            i = 4
+            given_params = []
+            while line_tokens[i].type != TT_RPAREN:
+                if line_tokens[i].type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_IDTFR]:
+                    param_value = line_tokens[i]
+                    if param_value.type == TT_IDTFR:
+                        param_type = self.get_variable_type(param_value.value)
+                        if param_type is None:
+                            self.errors.append(f"Undeclared Variable Error: Variable '{param_value.value}' is not declared. (line {line_number})")
+                    else:
+                        param_type = param_value.type
+                    given_params.append(param_type)
+                i += 1
+            if len(given_params) != len(expected_params):
+                self.errors.append(f"Parameter Error: Function '{function_name}' expected {len(expected_params)} parameters but got {len(given_params)}. (line {line_number})")
             for expected, given in zip(expected_params, given_params):
                 if not self.is_type_compatible(expected, given):
                     self.errors.append(f"Type Error: Function '{function_name}' expected parameter of type {expected} but got {given}. (line {line_number})")
                     break
+            function_return_type = self.symbol_table[0][function_name]["return_type"]
+
+        if not self.is_type_compatible(self.get_variable_type(variable_name), function_return_type):
+            self.errors.append(f"Type Error: Variable '{variable_name}' is of type {self.get_variable_type(variable_name)}, but the function '{function_name}' returns type {function_return_type}. (line {line_number})")
 
     def handle_function_definition(self, line_tokens, line_number):
         function_name = line_tokens[1].value
@@ -270,7 +394,14 @@ class SemanticAnalyzer:
         expression_type = self.evaluate_expression_type(expression_tokens)
         if expression_type not in [TT_PINT_LIT, TT_DOFFY_LIT, TT_PINT, TT_DOFFY]:
             self.errors.append(f"Type Error: HELM expression must be of type {TT_PINT_LIT} or {TT_DOFFY_LIT}. (line {line_number})")
-
+    
+    compatible_types = {
+        TT_PINT: [TT_PINT_LIT],
+        TT_DOFFY: [TT_DOFFY_LIT],
+        TT_FLEET: [TT_FLEET_LIT],
+        TT_BULL: [TT_REAL, TT_USOPP],
+    }
+    
     def evaluate_expression_type(self, expression_tokens):
         def get_type(token):
             if token.type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT]:
@@ -322,7 +453,12 @@ class SemanticAnalyzer:
                 right_type = evaluate(right_tokens)
                 if left_type == right_type:
                     return left_type
-                return None
+                elif left_type in self.compatible_types and right_type in self.compatible_types[left_type]:
+                    return left_type
+                elif right_type in self.compatible_types and left_type in self.compatible_types[right_type]:
+                    return right_type
+                else:
+                    return None
             elif tokens[0].type in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV]:
                 return None
 
@@ -341,6 +477,12 @@ class SemanticAnalyzer:
             if variable_name in scope:
                 return True
         return False
+    
+    def get_variable_info(self, variable_name):
+        for scope in reversed(self.symbol_table):
+            if variable_name in scope:
+                return scope[variable_name]
+        return None
 
 def analyze(tokens):
     semantic_analyzer = SemanticAnalyzer()
@@ -361,7 +503,7 @@ def analyze_line(tokens):
     elif len(tokens) == 1 and tokens[0].type == TT_OFFBOARD:
         return "OFFBOARD_STATEMENT"
     elif tokens[0].type == TT_LOYAL:
-        return "LOYAL_STATEMENT"
+        return "LOYAL_DECLARATION"
     elif tokens[0].type in [TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL] and tokens[2].type == TT_ASSIGN:
         assign_count = sum(1 for token in tokens if token.type == TT_ASSIGN)
         if assign_count > 1:
@@ -396,6 +538,8 @@ def analyze_line(tokens):
         return "ALT_CONDITIONAL"
     elif tokens[0].type == TT_HELM and tokens[1].type == TT_LPAREN:
         return "HELM_SWITCH"
+    elif tokens[0].type == TT_FIRE:
+        return "FIRE_STATEMENT"
     return "UNKNOWN"
 
 # tokens = [
