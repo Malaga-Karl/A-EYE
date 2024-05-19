@@ -239,7 +239,21 @@ def generate(code):
                 if '=' in item:
                     declare = item.split("=")
                     variables[declare[0].strip()] = declare[1].strip()
-            
+        
+        if activeBrackets == 0 and hadOBracket:
+            all_global_vars = []
+            for decl in global_vars:
+                if decl != '':
+                    sep_by_semicolon = [item.strip() for item in decl.split(";") if item != '']
+                    for item in sep_by_semicolon:
+                        if '=' in item and item != '':
+                            declare = item.split("=")
+                            all_global_vars.append(declare[0].strip())
+            print("all global vars: ", all_global_vars)
+            global_statement = ["global " + s for s in all_global_vars]
+            line =  line + '\n\t' + '; '.join(global_statement) + '\n'
+
+
         pyfile.write(('\t'*activeBrackets) + line +'\n')
         print(variables)
             
@@ -250,10 +264,10 @@ def generate(code):
         if hadOBracket:
             activeBrackets += 1
         
-        if activeBrackets == 0:
+        if activeBrackets == 0 and line != "":
             global_vars.append(line)
             
-        print(global_vars)
+        print("global vars: ", global_vars)
     pyfile.write("\nif __name__ == '__main__':\n    main()")
     pyfile.close()
 

@@ -1,9 +1,15 @@
-x = 10; 
-def add(a, b) :
-	return (a + b); 
+num = 11;   i = 2;   is_prime = 1; 
+def main():
+	global num; global i; global is_prime
 
-def main() :
-	x = add(5, 10); 
+	while(i < num):
+		if(num % i == 0):
+			is_prime = 0; 
+			break; 
+		
+		print(i); 
+		i = i+1; 
+	
 
 
 if __name__ == '__main__':
