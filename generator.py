@@ -38,7 +38,7 @@ statement_replacements = {
     'chest': 'case',
     'dagger': 'case _',
     'void'  : 'def',
-    'loyal': ''
+    'loyal ': ''
 }
 
 def nth_repl(s, sub, repl, n):

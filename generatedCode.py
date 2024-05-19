@@ -1,7 +1,8 @@
+e = "Johnny"; 
 def main():
-	a = [1,2,3]; 
-	b = [4,5,6]; 
-	print(a+b); 
+	a = 2; 
+	n = "inamo";  d = 3.14; 
+	print(e); 
 
 
 if __name__ == '__main__':
