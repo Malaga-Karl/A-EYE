@@ -40,7 +40,8 @@ statement_replacements = {
     'chest': 'case',
     'dagger': 'case _',
     'void'  : 'def',
-    'loyal ': ''
+    'loyal ': '',
+    'load': 'show_custom_popup',
 }
 
 def replace_code(line, replacements):
@@ -122,6 +123,7 @@ def generate(code):
     # temp_var_counter = 1
     # temp_vars = {}
     # Iterate through lines
+    pyfile.write("from custom_popup_input import show_custom_popup\n")
     for i in range(firstLine, lastLine):
         hadOBracket = False
         line = code[i]
