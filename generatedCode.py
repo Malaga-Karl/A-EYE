@@ -1,7 +1,9 @@
-num = 11;   i = 2; 
-def main():
-    global num; 
-    print(num); 
+x = 10; 
+def add(a, b) :
+	return (a + b); 
+
+def main() :
+	x = add(5, 10); 
 
 
 if __name__ == '__main__':
