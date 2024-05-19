@@ -1,14 +1,17 @@
-num = 11;   i = 2;   is_prime = 1; 
-def main():
-	global num; global i; global is_prime
+def nameJake():
+	
 
-	while(i < num):
-		if(num % i == 0):
-			is_prime = 0; 
-			break; 
-		
-		print(i); 
-		i = i+1; 
+	return("Jake"); 
+
+def main():
+	
+
+	name = nameJake(); 
+	if(name == 5):
+		print(name); 
+	
+	else:
+		print("Your name is not Jake!"); 
 	
 
 

@@ -41,6 +41,23 @@ statement_replacements = {
     'loyal ': ''
 }
 
+def replace_code(line, replacements):
+    # Split the line by keeping the delimiters (string quotes)
+    segments = re.split(r'(\".*?\")', line)
+    new_segments = []
+
+    for segment in segments:
+        if segment.startswith('"') or segment.startswith("'"):
+            # It's a string literal, preserve it as is
+            new_segments.append(segment)
+        else:
+            # Apply replacements on non-string literals
+            for key, value in replacements.items():
+                segment = segment.replace(key, value)
+            new_segments.append(segment)
+
+    return ''.join(new_segments)
+
 def nth_repl(s, sub, repl, n):
     find = s.find(sub)
     i = find != -1
@@ -222,16 +239,18 @@ def generate(code):
             inside_ForLoop = True
             
 
-        for key in statement_replacements.keys():
-            if "\"" in line:
-                first_quote = line.find("\"") + 1
-                last_quote = line.rfind("\"")
-                prequote_substring = line[:first_quote]
-                postquote_substring = line[last_quote:]
-                line = prequote_substring.replace(key, statement_replacements[key]) + line[first_quote:last_quote] + postquote_substring.replace(key, statement_replacements[key])
-            else:
-                line = line.replace(key, statement_replacements[key])
+        # for key in statement_replacements.keys():
+        #     if "\"" in line:
+        #         first_quote = line.find("\"") + 1
+        #         last_quote = line.rfind("\"")
+        #         prequote_substring = line[:first_quote]
+        #         postquote_substring = line[last_quote:]
+        #         line = prequote_substring.replace(key, statement_replacements[key]) + line[first_quote:last_quote] + postquote_substring.replace(key, statement_replacements[key])
+        #     else:
+        #         line = line.replace(key, statement_replacements[key])
 
+        line = replace_code(line, statement_replacements)
+        
         if '=' in line:
             decl = [item.strip() for item in line.split(";") if item != '']
 
