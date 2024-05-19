@@ -135,22 +135,26 @@ def analyze_semantics():
     return True, result, []
 
 def run_code():
-    success, result, errors = analyze_semantics()
-    
-    if not success:
-        return
-    
     code = text_widget.get("1.0", "end").strip()
-    generator.generate(code)
     
+    placeholder_text = 'Start the code here ...................'
+    if code == placeholder_text:
+        return
+    result, errors = lexer.analyze_text(code)
+    if not errors:
+        generator.generate(code)
+   
     terminal_text.config(state="normal")
     terminal_text.delete("1.0", "end")
-    
-    with open("output.txt", "r") as output_file:
-        terminal_text.insert(tk.END, output_file.read() + "\n")
-    
-    terminal_text.config(fg="light green")
-    terminal_text.config(state="disabled")
+    if errors:
+        for error in errors:
+            terminal_text.insert(tk.END, error.as_string() + "\n")
+            terminal_text.tag_configure(foreground="light red")
+        terminal_text.config(state="disabled")
+    else:
+        output = open("output.txt", "r")
+        terminal_text.insert(tk.END, output.read() + "\n")
+        terminal_text.config(state="disabled", foreground="light green")
 
     table_headers = ["Line #", "Lexeme", "Token"]
     table.delete(*table.get_children()) 
