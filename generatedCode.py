@@ -1,9 +1,10 @@
 def main():
-	num = 10;   factorial = 1; 
-	for(i = 0;  i < num;  i+=1):
+	name = "karl"; 
+	num = 6; 
+	if(0 <= len(name)):
+		for i in range(0, len(name)+1, 1):
 			print(i); 
 	
-	print("done"); 
 
 
 if __name__ == '__main__':

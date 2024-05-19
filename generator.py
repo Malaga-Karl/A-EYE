@@ -147,34 +147,72 @@ def generate(code):
                 
 
         if 'four' in line:
+            activeParenthesis = 0
+            words_inside_for_loop = ''
+            four_index = line.index('four')
+            four_subset = line[four_index+4:]
+            four_subset = four_subset.rstrip('{')
+            print("four_subset: ", four_subset)
+
+            for char in four_subset:
+                if char == '(' and activeParenthesis == 0:
+                    activeParenthesis += 1
+                elif char == '(' and activeParenthesis > 0:
+                    activeParenthesis += 1
+                    words_inside_for_loop += char
+                elif char == ')' and activeParenthesis > 1:
+                    activeParenthesis -= 1
+                    words_inside_for_loop += char
+                elif char == ')' and activeParenthesis == 1:
+                    activeParenthesis -= 1
+                else:
+                    words_inside_for_loop += char
+            
+            print("words inside for: ", words_inside_for_loop)
+            words_with_parenthesis = '(' + words_inside_for_loop + ')'
+
             for_iteration = 0
-            in_for = re.findall(r'\(.*?\)', line)
-            in_for_no_parenthesis = str(in_for[0].replace('(', '').replace(')', ''))
-            in_for_no_parenthesis = str("".join(in_for_no_parenthesis))
-            in_for_no_parenthesis = remove_dtye(in_for_no_parenthesis)
-            in_for_split = [item.strip() for item in in_for_no_parenthesis.split(';')]
 
-            fordecl = in_for_split[0]
-            starting_point = fordecl.split('=')[1].strip()
-            variable = fordecl.split('=')[0].strip()
+            in_for_split = [item.strip() for item in words_inside_for_loop.split(';')]
 
-            condition = in_for_split[1]
+            for_decl = in_for_split[0].strip()
+            for_cond = in_for_split[1].strip()
+            for_update = in_for_split[2].strip()
+
+
+            starting_point = for_decl.split('=')[1].strip()
+            variable = remove_dtye(for_decl.split('=')[0]).strip()
+            print("starting point: ", starting_point)
+            print("variable: ", variable)
+
+            if '=' in for_cond:
+                ending_point = for_cond.split('=')[1].strip()
+            elif '<' in for_cond:
+                ending_point = for_cond.split('<')[1].strip()
+            elif '>' in for_cond:
+                ending_point = for_cond.split('>')[1].strip()
+            
+            print(for_cond)
+            print("ending point: ", ending_point)
+            condition = in_for_split[1].replace(variable,starting_point)
+
+            print("condition", condition)
 
             update = in_for_split[2]
             if '++' in update:
                 step = 1
+            if '--' in update:
+                step = -1
             
-            print(in_for_split)
-            
+
             line = f'theo({condition})' + '{\n' + ('\t' * (activeBrackets + 1)) + line + '}'
             if ending_point.isnumeric():
                 ending_point = ending_point if '=' not in condition else str(int(ending_point) + 1)
             else:
                 ending_point = ending_point if '=' not in condition else str(ending_point + "+1")
-            # else:
-            #     starting_point = ending_point
+        
             
-            line = line.replace(in_for[0], f' {variable} in range({starting_point}, {ending_point}, {step})')
+            line = line.replace(words_with_parenthesis, f' {variable} in range({starting_point}, {ending_point}, {step})')
             inside_ForLoop = True
             
 
