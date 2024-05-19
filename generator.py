@@ -1,12 +1,13 @@
 import constants
 import re
 import os
+import keyword
 
 class Generator:
     def __init__(self, code):
         self.code = code
 
-
+python_keywords = set(keyword.kwlist)
 statement_replacements = {
     ';' : '; ',
     'captain': 'def main',
@@ -23,6 +24,7 @@ statement_replacements = {
     'usopp' : 'False',
     'oro' : 'or',
     'nay' : 'not',
+    ' {' : ':',
     '{' : ':',
     '} ' : '}',
     '}' : '',
@@ -55,6 +57,29 @@ def replace_code(line, replacements):
             for key, value in replacements.items():
                 segment = segment.replace(key, value)
             new_segments.append(segment)
+
+    return ''.join(new_segments)
+
+def preprocess_identifiers(code, keywords):
+    # Regex pattern for identifiers (assuming they follow Python's naming conventions)
+    identifier_pattern = re.compile(r'\b[a-zA-Z_]\w*\b')
+
+    def replace_identifier(match):
+        identifier = match.group(0)
+        if identifier in keywords:
+            return identifier + '_'
+        return identifier
+
+    segments = re.split(r'(".*?"|\'.*?\')', code)
+    new_segments = []
+
+    for segment in segments:
+        if segment.startswith('"') or segment.startswith("'"):
+            # Preserve string literals as they are
+            new_segments.append(segment)
+        else:
+            # Process non-string literal segments
+            new_segments.append(identifier_pattern.sub(replace_identifier, segment))
 
     return ''.join(new_segments)
 
@@ -132,7 +157,7 @@ def generate(code):
             else:
                 activeBrackets -= 1
         
-
+        preprocessed_line = preprocess_identifiers(line, python_keywords)
         firstWord = line.split()[0] if len(line.split()) > 1 else ""
         
 
@@ -235,7 +260,7 @@ def generate(code):
                 ending_point = ending_point if '=' not in condition else str(ending_point + "+1")
         
             
-            line = line.replace(words_with_parenthesis, f' {variable} in range({starting_point}, {ending_point}, {step})')
+            line = line.replace(words_with_parenthesis, f' {variable} in range({starting_point}, {ending_point}, {step})').strip()
             inside_ForLoop = True
             
 
@@ -248,9 +273,9 @@ def generate(code):
         #         line = prequote_substring.replace(key, statement_replacements[key]) + line[first_quote:last_quote] + postquote_substring.replace(key, statement_replacements[key])
         #     else:
         #         line = line.replace(key, statement_replacements[key])
-
-        line = replace_code(line, statement_replacements)
         
+        line = replace_code(preprocessed_line, statement_replacements)
+
         if '=' in line:
             decl = [item.strip() for item in line.split(";") if item != '']
 

@@ -1,18 +1,12 @@
-def nameJake():
+def assert_():
 	
 
-	return("Jake"); 
+	print("assert!"); 
 
 def main():
 	
 
-	name = nameJake(); 
-	if(name == 5):
-		print(name); 
-	
-	else:
-		print("Your name is not Jake!"); 
-	
+	assert_(); 
 
 
 if __name__ == '__main__':
