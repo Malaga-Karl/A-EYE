@@ -1,10 +1,7 @@
 def main():
-	name = "karl"; 
-	num = 6; 
-	if(0 <= len(name)):
-		for i in range(0, len(name)+1, 1):
-			print(i); 
-	
+	a = [1,2,3]; 
+	b = [4,5,6]; 
+	print(a+b); 
 
 
 if __name__ == '__main__':

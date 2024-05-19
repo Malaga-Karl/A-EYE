@@ -134,12 +134,17 @@ def generate(code):
 
         if ',' in line:
             isParam = False
+            isArray = False
             for letter in line:
+                if letter == '[':
+                    isArray = True
+                if letter == ']':
+                    isArray = False
                 if letter == '(':
                     isParam = True
                 if letter == ')':
                     isParam = False
-                if letter == ',' and not isParam:
+                if letter == ',' and not isParam and not isArray:
                     line = line.replace(letter, "; ", 1)
             
    
