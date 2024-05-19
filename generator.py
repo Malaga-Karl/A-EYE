@@ -72,6 +72,7 @@ def generate(code):
     inside_comment = False
     inside_ForLoop = False
     for_iteration = 0
+    global_vars = []
 
     variables = {}
     
@@ -249,7 +250,10 @@ def generate(code):
         if hadOBracket:
             activeBrackets += 1
         
-
+        if activeBrackets == 0:
+            global_vars.append(line)
+            
+        print(global_vars)
     pyfile.write("\nif __name__ == '__main__':\n    main()")
     pyfile.close()
 

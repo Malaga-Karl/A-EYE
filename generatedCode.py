@@ -1,8 +1,7 @@
-e = "Johnny"; 
+num = 11;   i = 2; 
 def main():
-	a = 2; 
-	n = "inamo";  d = 3.14; 
-	print(e); 
+    global num; 
+    print(num); 
 
 
 if __name__ == '__main__':
