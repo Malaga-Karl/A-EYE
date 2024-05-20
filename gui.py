@@ -28,7 +28,7 @@ def analyze_code():
     if errors:
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n")
-        terminal_text.config(state="disabled", foreground="light red")
+        terminal_text.config(state="disabled", foreground="peach")
     else:
         terminal_text.insert(tk.END, "Lexical analysis successful" + "\n")
         terminal_text.config(state="disabled")

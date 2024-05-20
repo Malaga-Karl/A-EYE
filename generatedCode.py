@@ -1,11 +1,9 @@
 def main():
 	
 
-	a = 16; 
-	b = 22; 
-	h = 18; 
-	print("Area of Trapezoid:"); 
-	print(((a * b) / 2) * h); 
+	a = 16180.23464; 
+	b = 123; 
+	print(a+b); 
 
 
 if __name__ == '__main__':
