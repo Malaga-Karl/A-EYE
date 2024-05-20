@@ -1134,7 +1134,7 @@ def analyze_syntax(tokens):
     errors = syntax_analyzer.parse()
     # os.system("cls")
     if errors:
-        return errors[0]
+        return errors[0]     
     else:
         return "Syntax analysis successful"
 

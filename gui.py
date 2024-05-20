@@ -28,7 +28,7 @@ def analyze_code():
     if errors:
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n")
-        terminal_text.config(state="disabled", foreground="peach")
+        terminal_text.config(state="disabled", foreground="#ff6961")
     else:
         terminal_text.insert(tk.END, "Lexical analysis successful" + "\n")
         terminal_text.config(state="disabled")
@@ -50,22 +50,30 @@ def analyze_syntax():
     placeholder_text = 'Start the code here ...................'
     if code == placeholder_text:
         return
+    
     result, errors = lexer.analyze_text(code)
-    if not errors:
-        syntax_result = syntax.analyze_syntax(result)
-
+    
     terminal_text.config(state="normal")
     terminal_text.delete("1.0", "end")
+    
     if errors:
         for error in errors:
-            terminal_text.insert(tk.END, error.as_string() + "\n")
-        terminal_text.config(state="disabled", foreground="pink")
-    else:
-        terminal_text.insert(tk.END, syntax_result + "\n")
+            terminal_text.insert(tk.END, error.as_string() + "\n", "error")
+        terminal_text.tag_configure("error", foreground="#ff6961")
         terminal_text.config(state="disabled")
-        if syntax_result == "Syntax analysis successful":
-            terminal_text.tag_configure("success", foreground="light green")
-            terminal_text.tag_add("success", "1.0", "end")
+        return
+    
+    syntax_result = syntax.analyze_syntax(result)
+    terminal_text.insert(tk.END, syntax_result + "\n")
+    
+    if syntax_result == "Syntax analysis successful":
+        terminal_text.tag_configure("success", foreground="light green")
+        terminal_text.tag_add("success", "1.0", "end")
+    else:
+        terminal_text.tag_configure("error", foreground="#ff6961")
+        terminal_text.tag_add("error", "1.0", "end")
+    
+    terminal_text.config(state="disabled")
 
     table_headers = ["Line #", "Lexeme", "Token"]
     table.delete(*table.get_children()) 
@@ -91,7 +99,7 @@ def analyze_semantics():
     if errors:
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n", "error")
-        terminal_text.tag_configure("error", foreground="pink")
+        terminal_text.tag_configure("error", foreground="#ff6961")
         return False, result, errors
     
     syntax_result = syntax.analyze_syntax(result)
@@ -101,7 +109,7 @@ def analyze_semantics():
         terminal_text.tag_configure("success", foreground="light green")
     else:
         terminal_text.insert(tk.END, syntax_result + "\n", "error")
-        terminal_text.tag_configure("error", foreground="pink")
+        terminal_text.tag_configure("error", foreground="#ff6961")
         return False, result, [syntax_result]
     
         
@@ -110,7 +118,7 @@ def analyze_semantics():
         terminal_text.tag_configure("success", foreground="light green")
     else:
         terminal_text.insert(tk.END, semantics_result + "\n", "error")
-        terminal_text.tag_configure("error", foreground="pink")
+        terminal_text.tag_configure("error", foreground="#ff6961")
         return False, result, [semantics_result]
     
     # Disable editing after displaying the message
