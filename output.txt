@@ -1,1 +1,7 @@
-40
+Number Not found
+Number Not found
+Number Not found
+Number Not found
+50 is found at index
+4
+Number Not found

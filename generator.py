@@ -94,6 +94,8 @@ def generate(code):
     inside_ForLoop = False
     for_iteration = 0
     global_vars = []
+    brackets_inside_for = []
+    numOfForLoops = -1
 
     variables = {}
     
@@ -128,9 +130,13 @@ def generate(code):
         line = remove_space_before_bracket(line)
         # Check for brackets
         if '{' in line:
+            # print("active brackets: ", activeBrackets)
+            # print("inside for loop: ", brackets_inside_for[numOfForLoops])
             hadOBracket = True
-        if '}' in line:
             if inside_ForLoop:
+                brackets_inside_for[numOfForLoops] += 1
+        if '}' in line:
+            if inside_ForLoop and brackets_inside_for[numOfForLoops] == 0:
                 activeBrackets -=2
                 inside_ForLoop = False
             else:
@@ -179,7 +185,7 @@ def generate(code):
             four_index = line.index('four')
             # Trim the substring starting from the end of 'four' to remove excess spaces and opening brace
             four_subset = line[four_index+4:].strip().rstrip('{')
-            print("four_subset: ", four_subset)
+            # print("four_subset: ", four_subset)
 
             # Correctly identify the for loop condition by handling nested parentheses
             for char in four_subset:
@@ -196,7 +202,7 @@ def generate(code):
                 else:
                     words_inside_for_loop += char
 
-            print("words inside for: ", words_inside_for_loop)
+            # print("words inside for: ", words_inside_for_loop)
             words_with_parenthesis = '(' + words_inside_for_loop + ')'
 
             for_iteration = 0
@@ -211,8 +217,8 @@ def generate(code):
             # Extract starting point and variable name
             starting_point = for_decl.split('=')[1].strip()
             variable = remove_dtye(for_decl.split('=')[0]).strip()
-            print("starting point: ", starting_point)
-            print("variable: ", variable)
+            # print("starting point: ", starting_point)
+            # print("variable: ", variable)
 
             # Determine the ending point based on the condition
             if '=' in for_cond:
@@ -222,11 +228,11 @@ def generate(code):
             elif '>' in for_cond:
                 ending_point = for_cond.split('>')[1].strip()
 
-            print(for_cond)
-            print("ending point: ", ending_point)
+            # # print(for_cond)
+            # print("ending point: ", ending_point)
             condition = in_for_split[1].replace(variable, starting_point)
 
-            print("condition", condition)
+            # print("condition", condition)
 
             # Determine the step based on the update expression
             update = in_for_split[2]
@@ -244,6 +250,8 @@ def generate(code):
 
             line = line.replace(words_with_parenthesis, f' {variable} in range({starting_point}, {ending_point}, {step})')
             inside_ForLoop = True
+            numOfForLoops += 1
+            brackets_inside_for.append(0)
             
 
         # for key in statement_replacements.keys():
@@ -275,13 +283,13 @@ def generate(code):
                         if '=' in item and item != '':
                             declare = item.split("=")
                             all_global_vars.append(declare[0].strip())
-            print("all global vars: ", all_global_vars)
+            # print("all global vars: ", all_global_vars)
             global_statement = ["global " + s for s in all_global_vars]
             line =  line + '\n\t' + '; '.join(global_statement) + '\n'
 
 
         pyfile.write(('\t'*activeBrackets) + line +'\n')
-        print(variables)
+        # print(variables)
             
         if inside_ForLoop:
             if for_iteration == 0:
@@ -293,7 +301,7 @@ def generate(code):
         if activeBrackets == 0 and line != "":
             global_vars.append(line)
             
-        print("global vars: ", global_vars)
+        # print("global vars: ", global_vars)
     pyfile.write("\nif __name__ == '__main__':\n    main()")
     pyfile.close()
 
