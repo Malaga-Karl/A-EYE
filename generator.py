@@ -169,11 +169,11 @@ def generate(code):
                     var_name = segment.split('=')[0].strip().split()[-1]
                     prompt = re.findall(r'\".*?\"', segment)
                     if firstWord == 'pint':
-                        load_replacement = f'{var_name} = int(show_custom_popup({prompt[0]}[pint]))'
+                        load_replacement = f'{var_name} = int(show_custom_popup("[pint] " + {prompt[0]}))'
                     elif firstWord == 'fleet':
-                        load_replacement = f'{var_name} = float(show_custom_popup({prompt[0]}[fleet]))'
+                        load_replacement = f'{var_name} = float(show_custom_popup("[fleet] " + {prompt[0]}))'
                     else:
-                        load_replacement = f'{var_name} = show_custom_popup({prompt[0]}[doffy])'
+                        load_replacement = f'{var_name} = show_custom_popup("[doffy]" + {prompt[0]})'
                     segments[j] = segment.replace(f'{var_name} = load({prompt[0]})', load_replacement, 1)
             line = ', '.join(segments)
 
