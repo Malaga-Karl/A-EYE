@@ -1,9 +1,18 @@
-from custom_popup_input import show_custom_popup
-def main():
-	
+i = 10; 
+def add(x, y):
+	global i
 
-	name = show_custom_popup("what is your name?"); 
-	print(name); 
+	return(x + i); 
+
+def main():
+	global i
+
+	if(0 < 10):
+		for     a in range(0, 10, 1):
+			print(a); 
+	
+	print("hello!"); 
+	print(add(5,5)); 
 
 
 if __name__ == '__main__':

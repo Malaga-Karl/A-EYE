@@ -1,13 +1,12 @@
 import constants
 import re
 import os
-import keyword
 
 class Generator:
     def __init__(self, code):
         self.code = code
 
-python_keywords = set(keyword.kwlist)
+
 statement_replacements = {
     ';' : '; ',
     'captain': 'def main',
@@ -24,7 +23,6 @@ statement_replacements = {
     'usopp' : 'False',
     'oro' : 'or',
     'nay' : 'not',
-    ' {' : ':',
     '{' : ':',
     '} ' : '}',
     '}' : '',
@@ -40,8 +38,7 @@ statement_replacements = {
     'chest': 'case',
     'dagger': 'case _',
     'void'  : 'def',
-    'loyal ': '',
-    'load': 'show_custom_popup',
+    'loyal ': ''
 }
 
 def replace_code(line, replacements):
@@ -58,29 +55,6 @@ def replace_code(line, replacements):
             for key, value in replacements.items():
                 segment = segment.replace(key, value)
             new_segments.append(segment)
-
-    return ''.join(new_segments)
-
-def preprocess_identifiers(code, keywords):
-    # Regex pattern for identifiers (assuming they follow Python's naming conventions)
-    identifier_pattern = re.compile(r'\b[a-zA-Z_]\w*\b')
-
-    def replace_identifier(match):
-        identifier = match.group(0)
-        if identifier in keywords:
-            return identifier + '_'
-        return identifier
-
-    segments = re.split(r'(".*?"|\'.*?\')', code)
-    new_segments = []
-
-    for segment in segments:
-        if segment.startswith('"') or segment.startswith("'"):
-            # Preserve string literals as they are
-            new_segments.append(segment)
-        else:
-            # Process non-string literal segments
-            new_segments.append(identifier_pattern.sub(replace_identifier, segment))
 
     return ''.join(new_segments)
 
@@ -123,7 +97,6 @@ def generate(code):
     # temp_var_counter = 1
     # temp_vars = {}
     # Iterate through lines
-    pyfile.write("from custom_popup_input import show_custom_popup\n")
     for i in range(firstLine, lastLine):
         hadOBracket = False
         line = code[i]
@@ -159,7 +132,7 @@ def generate(code):
             else:
                 activeBrackets -= 1
         
-        preprocessed_line = preprocess_identifiers(line, python_keywords)
+
         firstWord = line.split()[0] if len(line.split()) > 1 else ""
         
 
@@ -200,10 +173,11 @@ def generate(code):
             activeParenthesis = 0
             words_inside_for_loop = ''
             four_index = line.index('four')
-            four_subset = line[four_index+4:]
-            four_subset = four_subset.rstrip('{')
+            # Trim the substring starting from the end of 'four' to remove excess spaces and opening brace
+            four_subset = line[four_index+4:].strip().rstrip('{')
             print("four_subset: ", four_subset)
 
+            # Correctly identify the for loop condition by handling nested parentheses
             for char in four_subset:
                 if char == '(' and activeParenthesis == 0:
                     activeParenthesis += 1
@@ -217,52 +191,54 @@ def generate(code):
                     activeParenthesis -= 1
                 else:
                     words_inside_for_loop += char
-            
+
             print("words inside for: ", words_inside_for_loop)
             words_with_parenthesis = '(' + words_inside_for_loop + ')'
 
             for_iteration = 0
 
+            # Split the for loop components and strip excess spaces
             in_for_split = [item.strip() for item in words_inside_for_loop.split(';')]
 
             for_decl = in_for_split[0].strip()
             for_cond = in_for_split[1].strip()
             for_update = in_for_split[2].strip()
 
-
+            # Extract starting point and variable name
             starting_point = for_decl.split('=')[1].strip()
             variable = remove_dtye(for_decl.split('=')[0]).strip()
             print("starting point: ", starting_point)
             print("variable: ", variable)
 
+            # Determine the ending point based on the condition
             if '=' in for_cond:
                 ending_point = for_cond.split('=')[1].strip()
             elif '<' in for_cond:
                 ending_point = for_cond.split('<')[1].strip()
             elif '>' in for_cond:
                 ending_point = for_cond.split('>')[1].strip()
-            
+
             print(for_cond)
             print("ending point: ", ending_point)
-            condition = in_for_split[1].replace(variable,starting_point)
+            condition = in_for_split[1].replace(variable, starting_point)
 
             print("condition", condition)
 
+            # Determine the step based on the update expression
             update = in_for_split[2]
             if '++' in update:
                 step = 1
             if '--' in update:
                 step = -1
-            
 
+            # Convert the loop into Python's range syntax
             line = f'theo({condition})' + '{\n' + ('\t' * (activeBrackets + 1)) + line + '}'
             if ending_point.isnumeric():
                 ending_point = ending_point if '=' not in condition else str(int(ending_point) + 1)
             else:
-                ending_point = ending_point if '=' not in condition else str(ending_point + "+1")
-        
-            
-            line = line.replace(words_with_parenthesis, f' {variable} in range({starting_point}, {ending_point}, {step})').strip()
+                ending_point = ending_point if '=' not in condition else f'{ending_point} + 1'
+
+            line = line.replace(words_with_parenthesis, f' {variable} in range({starting_point}, {ending_point}, {step})')
             inside_ForLoop = True
             
 
@@ -275,9 +251,9 @@ def generate(code):
         #         line = prequote_substring.replace(key, statement_replacements[key]) + line[first_quote:last_quote] + postquote_substring.replace(key, statement_replacements[key])
         #     else:
         #         line = line.replace(key, statement_replacements[key])
-        
-        line = replace_code(preprocessed_line, statement_replacements)
 
+        line = replace_code(line, statement_replacements)
+        
         if '=' in line:
             decl = [item.strip() for item in line.split(";") if item != '']
 
