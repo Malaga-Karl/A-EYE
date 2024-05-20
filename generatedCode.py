@@ -1,10 +1,15 @@
 def main():
 	
 
-	for_ = 5;   while_ = 6;   if_ = 7; 
-	if(0 < for_):
-		for i in range(0, for_, 1):
-			print(i); 
+	numbers = [10, 20, 30, 40, 50]; 
+	# print no. 40
+	if(0<=5):
+		for    i in range(0, 6, 1):
+			if(numbers[i] == 40):
+				print(numbers[i]); 
+		else :
+			print("Number not found"); 
+		
 	
 
 

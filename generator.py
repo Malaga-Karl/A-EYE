@@ -1,13 +1,12 @@
 import constants
 import re
 import os
-import keyword
 
 class Generator:
     def __init__(self, code):
         self.code = code
 
-python_keywords = set(keyword.kwlist)
+
 statement_replacements = {
     ';' : '; ',
     'captain': 'def main',
@@ -41,28 +40,6 @@ statement_replacements = {
     'void'  : 'def',
     'loyal ': ''
 }
-def preprocess_identifiers(code, keywords):
-    # Regex pattern for identifiers (assuming they follow Python's naming conventions)
-    identifier_pattern = re.compile(r'\b[a-zA-Z_]\w*\b')
-
-    def replace_identifier(match):
-        identifier = match.group(0)
-        if identifier in keywords:
-            return identifier + '_'
-        return identifier
-
-    segments = re.split(r'(".*?")', code)
-    new_segments = []
-
-    for segment in segments:
-        if segment.startswith('"') or segment.startswith("'"):
-            # Preserve string literals as they are
-            new_segments.append(segment)
-        else:
-            # Process non-string literal segments
-            new_segments.append(identifier_pattern.sub(replace_identifier, segment))
-
-    return ''.join(new_segments)
 
 def replace_code(line, replacements):
     # Split the line by keeping the delimiters (string quotes)
@@ -81,6 +58,16 @@ def replace_code(line, replacements):
 
     return ''.join(new_segments)
 
+def nth_repl(s, sub, repl, n):
+    find = s.find(sub)
+    i = find != -1
+    while find != -1 and i != n:
+        find = s.find(sub, find + 1)
+        i += 1
+    if i == n:
+        return s[:find] + repl + s[find+len(sub):]
+    return s
+
 def remove_dtye(line):
     if 'pint ' in line:
         line = line.replace('pint', '')
@@ -91,6 +78,10 @@ def remove_dtye(line):
     elif 'bull ' in line:
         line = line.replace('bull', '')
     return line
+
+def remove_space_before_bracket(line):
+    # Remove space between closing parenthesis and opening bracket
+    return re.sub(r'\)\s+\{', '){', line)
 
 def generate(code):
     # Split code by lines
@@ -116,8 +107,6 @@ def generate(code):
         
         if line == "":
             continue
-
-        line = preprocess_identifiers(line, python_keywords)
         
         # Check for multiline comment start and end
         if '##' in code[i]:
@@ -136,7 +125,7 @@ def generate(code):
             code[i] = code[i].split('#')[0]  # Remove the comment part
             code[i] = code[i].rstrip()  # Remove trailing whitespace
             
-
+        line = remove_space_before_bracket(line)
         # Check for brackets
         if '{' in line:
             hadOBracket = True
