@@ -153,6 +153,8 @@ class SyntaxAnalyzer:
     # 47 {IDENTIFIER}
     def var_assign_global(self):
         if not self.consume([TT_IDTFR]):return
+        if self.current_token.type == TT_LSBRACKET:
+            self.index()
         if not self.consume([TT_ASSIGN]):return
         self.global_val()
 
@@ -496,6 +498,8 @@ class SyntaxAnalyzer:
     # 47 {IDENTIFIER}
     def var_assign(self):
         if not self.consume([TT_IDTFR]):return
+        if self.current_token.type == TT_LSBRACKET:
+            self.index()
         if not self.consume([TT_ASSIGN]):return
         self.value()
 
@@ -643,14 +647,22 @@ class SyntaxAnalyzer:
     # 74 {IDENTIFIER, real, usopp} fix
     def relational_comp(self):
         if self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET, TT_REAL, TT_USOPP]: 
-            if self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET] and self.peek2() is not None and self.peek2().type not in [TT_REAL, TT_USOPP]: 
+            if self.peek2().type == TT_DOFFY_LIT and self.current_token.type != TT_DOFFY_LIT:
+                self.expression()
+                self.str_cop()
+                if not self.consume([TT_DOFFY_LIT]):return
+            elif self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET] and self.peek2() is not None and self.peek2().type not in [TT_REAL, TT_USOPP]: 
                 self.expression()
                 self.comparator()
                 self.expression2()
-            elif self.current_token.type == TT_DOFFY_LIT:
+            elif self.current_token.type == TT_DOFFY_LIT and self.peek2().type == TT_DOFFY_LIT:
                 if not self.consume([TT_DOFFY_LIT]):return
                 self.str_cop()
                 if not self.consume([TT_DOFFY_LIT]):return
+            elif self.current_token.type == TT_DOFFY_LIT and self.peek2().type != TT_DOFFY_LIT:
+                if not self.consume([TT_DOFFY_LIT]):return
+                self.str_cop()
+                self.expression()
             else:
                 self.bool_exp()
                 self.str_cop()
@@ -1064,7 +1076,7 @@ class SyntaxAnalyzer:
     def statement(self):
         if self.current_token.type in [TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_LOYAL, TT_IDTFR, TT_THEO, TT_HELM, TT_FOUR, TT_WHALE, TT_LOAD, TT_FIRE, TT_LEN, TT_LEAK, TT_SAIL, TT_PASS, TT_RBRACKET, TT_HOME]: 
             if self.current_token.type in [TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL, TT_LOYAL, TT_IDTFR] and self.peek() is not None and self.peek().type not in [TT_INCR, TT_DECR, TT_LPAREN]: 
-                if self.current_token.type == TT_IDTFR and self.peek() is not None and self.peek().type != TT_ASSIGN:
+                if self.current_token.type == TT_IDTFR and self.peek() is not None and self.peek().type not in [TT_ASSIGN, TT_LSBRACKET]:
                     if not self.consume([TT_ASSIGN, TT_LPAREN]):return
                 self.var_statement()
                 if not self.consume([TT_SMCLN]):return
