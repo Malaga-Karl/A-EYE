@@ -59,7 +59,7 @@ def analyze_syntax():
     if errors:
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n")
-        terminal_text.config(state="disabled", foreground="light red")
+        terminal_text.config(state="disabled", foreground="pink")
     else:
         terminal_text.insert(tk.END, syntax_result + "\n")
         terminal_text.config(state="disabled")
@@ -91,26 +91,26 @@ def analyze_semantics():
     if errors:
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n", "error")
-        terminal_text.config(state="disabled", foreground="light red")
+        terminal_text.tag_configure("error", foreground="pink")
         return False, result, errors
     
     syntax_result = syntax.analyze_syntax(result)
     semantics_result = test_semantics.analyze_sem(result)
-    
     if syntax_result == "Syntax analysis successful":
         terminal_text.insert(tk.END, syntax_result + "\n", "success")
         terminal_text.tag_configure("success", foreground="light green")
     else:
         terminal_text.insert(tk.END, syntax_result + "\n", "error")
-        terminal_text.config(state="disabled", foreground="light red")
+        terminal_text.tag_configure("error", foreground="pink")
         return False, result, [syntax_result]
+    
         
     if semantics_result == "Semantic analysis successful":
         terminal_text.insert(tk.END, semantics_result + "\n", "success")
         terminal_text.tag_configure("success", foreground="light green")
     else:
         terminal_text.insert(tk.END, semantics_result + "\n", "error")
-        terminal_text.config(state="disabled", foreground="light red")
+        terminal_text.tag_configure("error", foreground="pink")
         return False, result, [semantics_result]
     
     # Disable editing after displaying the message
