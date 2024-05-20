@@ -11,7 +11,7 @@ statement_replacements = {
     ';' : '; ',
     'captain': 'def main',
     'fire': 'print',
-    'load': 'input',
+    'load': 'show_custom_popup',
     'altheo' : 'elif',
     'theo' : 'if',
     'alt' : 'else',
@@ -103,6 +103,7 @@ def generate(code):
     # temp_var_counter = 1
     # temp_vars = {}
     # Iterate through lines
+    pyfile.write("from custom_popup_input import show_custom_popup\n\n")
     for i in range(firstLine, lastLine):
         hadOBracket = False
         line = code[i]
@@ -160,6 +161,22 @@ def generate(code):
                     words[0] = 'def'
                     line = ' '.join(words)
 
+        if 'load' in line:
+            segments = line.split(',')
+            for j in range(len(segments)):
+                segment = segments[j]
+                if 'load' in segment:
+                    var_name = segment.split('=')[0].strip().split()[-1]
+                    prompt = re.findall(r'\".*?\"', segment)
+                    if firstWord == 'pint':
+                        load_replacement = f'{var_name} = int(show_custom_popup({prompt[0]}[pint]))'
+                    elif firstWord == 'fleet':
+                        load_replacement = f'{var_name} = float(show_custom_popup({prompt[0]}[fleet]))'
+                    else:
+                        load_replacement = f'{var_name} = show_custom_popup({prompt[0]}[doffy])'
+                    segments[j] = segment.replace(f'{var_name} = load({prompt[0]})', load_replacement, 1)
+            line = ', '.join(segments)
+
         if ',' in line:
             isParam = False
             isArray = False
@@ -174,10 +191,7 @@ def generate(code):
                     isParam = False
                 if letter == ',' and not isParam and not isArray:
                     line = line.replace(letter, "; ", 1)
-            
-   
 
-                
 
         if 'four' in line:
             activeParenthesis = 0
@@ -264,6 +278,8 @@ def generate(code):
         #     else:
         #         line = line.replace(key, statement_replacements[key])
 
+       
+        
         line = replace_code(line, statement_replacements)
         
         if '=' in line:
