@@ -1,18 +1,11 @@
-i = 10; 
-def add(x, y):
-	global i
-
-	return(x + i); 
-
 def main():
-	global i
-
-	if(0 < 10):
-		for     a in range(0, 10, 1):
-			print(a); 
 	
-	print("hello!"); 
-	print(add(5,5)); 
+
+	for_ = 5;   while_ = 6;   if_ = 7; 
+	if(0 < for_):
+		for i in range(0, for_, 1):
+			print(i); 
+	
 
 
 if __name__ == '__main__':
