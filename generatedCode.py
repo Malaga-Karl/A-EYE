@@ -3,8 +3,9 @@ from custom_popup_input import show_custom_popup
 def main():
 	
 
-	a = 5;    b = float(show_custom_popup("[ Fleet ] " + "give me b: ")); 
-	a = float(show_custom_popup("[ Fleet ] " + "give me a: ")); 
+	a = 5; 
+	print(a); 
+	a = int(show_custom_popup("[ Pint ] " + "new a: ")); 
 	print(a); 
 
 

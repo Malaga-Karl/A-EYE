@@ -172,17 +172,18 @@ def generate(code):
 
         if firstWord in ['pint', 'fleet', 'doffy', 'bull', 'void']:
             line = extract_var_types(line, types_dict)
-            secondWord = line.split()[1]
-            if '(' in secondWord:
+            # secondWord = line.split()[1]
+            # if '(' in secondWord:
+            if activeBrackets == 0:
                 words = line.split()
                 words[0] = 'def'
                 line = ' '.join(words)
-            else:
-                thirdWord = line.split()[2]
-                if '(' in thirdWord:
-                    words = line.split()
-                    words[0] = 'def'
-                    line = ' '.join(words)
+            # else:
+            #     thirdWord = line.split()[2]
+            #     if '(' in thirdWord:
+            #         words = line.split()
+            #         words[0] = 'def'
+            #         line = ' '.join(words)
 
         print(types_dict) if types_dict else None
         if 'load' in line:
@@ -190,15 +191,36 @@ def generate(code):
             for j in range(len(segments)):
                 segment = segments[j]
                 if 'load' in segment:
-                    var_name = segment.split('=')[0].strip().split()[-1]
-                    prompt = re.findall(r'\".*?\"', segment)
-                    if types_dict[var_name] == 'int':
-                        load_replacement = f'{var_name} = int(show_custom_popup("[ Pint ] " + {prompt[0]}))'
-                    elif types_dict[var_name] == 'float':
-                        load_replacement = f'{var_name} = float(show_custom_popup("[ Fleet ] " + {prompt[0]}))'
+                    # Find the variable declaration (if any)
+                    var_declaration_match = re.match(r'(int|float|str)\s+(\w+)\s*=\s*load\((\".*?\")\)', segment)
+                    
+                    if var_declaration_match:
+                        var_type = var_declaration_match.group(1)
+                        var_name = var_declaration_match.group(2)
+                        prompt = var_declaration_match.group(3)
+                        
+                        if var_type == 'int':
+                            load_replacement = f'{var_name} = int(show_custom_popup("[ Pint ] " + {prompt}))'
+                        elif var_type == 'float':
+                            load_replacement = f'{var_name} = float(show_custom_popup("[ Fleet ] " + {prompt}))'
+                        else:
+                            load_replacement = f'{var_name} = show_custom_popup("[ Doffy ] " + {prompt})'
+                            
+                        segments[j] = load_replacement
+                        types_dict[var_name] = var_type  # Add to types_dict if newly declared
                     else:
-                        load_replacement = f'{var_name} = show_custom_popup("[ Doffy ]" + {prompt[0]})'
-                    segments[j] = segment.replace(f'{var_name} = load({prompt[0]})', load_replacement, 1)
+                        var_name = segment.split('=')[0].strip().split()[-1]
+                        prompt = re.findall(r'\".*?\"', segment)
+                        if var_name in types_dict:
+                            var_type = types_dict[var_name]
+                            if var_type == 'int':
+                                load_replacement = f'{var_name} = int(show_custom_popup("[ Pint ] " + {prompt[0]}))'
+                            elif var_type == 'float':
+                                load_replacement = f'{var_name} = float(show_custom_popup("[ Fleet ] " + {prompt[0]}))'
+                            else:
+                                load_replacement = f'{var_name} = show_custom_popup("[ Doffy ] " + {prompt[0]})'
+                            segments[j] = segment.replace(f'{var_name} = load({prompt[0]})', load_replacement, 1)
+            
             line = ', '.join(segments)
 
         if ',' in line:
