@@ -1,13 +1,10 @@
+from custom_popup_input import show_custom_popup
+
 def main():
 	
 
-	factorial = 1; 
-	num = 10; 
-	if(1 <= num):
-		for i in range(1, num+1, 1):
-			factorial = factorial * i; 
-			print(factorial); 
-	
+	a = "Hale"; 
+	print("Name: " + a); 
 
 
 if __name__ == '__main__':

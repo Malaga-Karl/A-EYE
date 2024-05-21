@@ -11,7 +11,7 @@ statement_replacements = {
     ';' : '; ',
     'captain': 'def main',
     'fire': 'print',
-    'load': 'input',
+    'load': 'show_custom_popup',
     'altheo' : 'elif',
     'theo' : 'if',
     'alt' : 'else',
@@ -79,6 +79,10 @@ def remove_dtye(line):
         line = line.replace('bull', '')
     return line
 
+def remove_space_before_bracket(line):
+    # Remove space between closing parenthesis and opening bracket
+    return re.sub(r'\)\s+\{', '){', line)
+
 def generate(code):
     # Split code by lines
     code = [line.strip() for line in code.split("\n")]
@@ -90,6 +94,8 @@ def generate(code):
     inside_ForLoop = False
     for_iteration = 0
     global_vars = []
+    brackets_inside_for = []
+    numOfForLoops = -1
 
     variables = {}
     
@@ -97,6 +103,7 @@ def generate(code):
     # temp_var_counter = 1
     # temp_vars = {}
     # Iterate through lines
+    pyfile.write("from custom_popup_input import show_custom_popup\n\n")
     for i in range(firstLine, lastLine):
         hadOBracket = False
         line = code[i]
@@ -121,12 +128,16 @@ def generate(code):
             code[i] = code[i].split('#')[0]  # Remove the comment part
             code[i] = code[i].rstrip()  # Remove trailing whitespace
             
-
+        line = remove_space_before_bracket(line)
         # Check for brackets
         if '{' in line:
+            # print("active brackets: ", activeBrackets)
+            # print("inside for loop: ", brackets_inside_for[numOfForLoops])
             hadOBracket = True
-        if '}' in line:
             if inside_ForLoop:
+                brackets_inside_for[numOfForLoops] += 1
+        if '}' in line:
+            if inside_ForLoop and brackets_inside_for[numOfForLoops] == 0:
                 activeBrackets -=2
                 inside_ForLoop = False
             else:
@@ -150,6 +161,22 @@ def generate(code):
                     words[0] = 'def'
                     line = ' '.join(words)
 
+        if 'load' in line:
+            segments = line.split(',')
+            for j in range(len(segments)):
+                segment = segments[j]
+                if 'load' in segment:
+                    var_name = segment.split('=')[0].strip().split()[-1]
+                    prompt = re.findall(r'\".*?\"', segment)
+                    if firstWord == 'pint':
+                        load_replacement = f'{var_name} = int(show_custom_popup("[pint] " + {prompt[0]}))'
+                    elif firstWord == 'fleet':
+                        load_replacement = f'{var_name} = float(show_custom_popup("[fleet] " + {prompt[0]}))'
+                    else:
+                        load_replacement = f'{var_name} = show_custom_popup("[doffy]" + {prompt[0]})'
+                    segments[j] = segment.replace(f'{var_name} = load({prompt[0]})', load_replacement, 1)
+            line = ', '.join(segments)
+
         if ',' in line:
             isParam = False
             isArray = False
@@ -164,19 +191,17 @@ def generate(code):
                     isParam = False
                 if letter == ',' and not isParam and not isArray:
                     line = line.replace(letter, "; ", 1)
-            
-   
 
-                
 
         if 'four' in line:
             activeParenthesis = 0
             words_inside_for_loop = ''
             four_index = line.index('four')
-            four_subset = line[four_index+4:]
-            four_subset = four_subset.rstrip('{')
-            print("four_subset: ", four_subset)
+            # Trim the substring starting from the end of 'four' to remove excess spaces and opening brace
+            four_subset = line[four_index+4:].strip().rstrip('{')
+            # print("four_subset: ", four_subset)
 
+            # Correctly identify the for loop condition by handling nested parentheses
             for char in four_subset:
                 if char == '(' and activeParenthesis == 0:
                     activeParenthesis += 1
@@ -190,53 +215,57 @@ def generate(code):
                     activeParenthesis -= 1
                 else:
                     words_inside_for_loop += char
-            
-            print("words inside for: ", words_inside_for_loop)
+
+            # print("words inside for: ", words_inside_for_loop)
             words_with_parenthesis = '(' + words_inside_for_loop + ')'
 
             for_iteration = 0
 
+            # Split the for loop components and strip excess spaces
             in_for_split = [item.strip() for item in words_inside_for_loop.split(';')]
 
             for_decl = in_for_split[0].strip()
             for_cond = in_for_split[1].strip()
             for_update = in_for_split[2].strip()
 
-
+            # Extract starting point and variable name
             starting_point = for_decl.split('=')[1].strip()
             variable = remove_dtye(for_decl.split('=')[0]).strip()
-            print("starting point: ", starting_point)
-            print("variable: ", variable)
+            # print("starting point: ", starting_point)
+            # print("variable: ", variable)
 
+            # Determine the ending point based on the condition
             if '=' in for_cond:
                 ending_point = for_cond.split('=')[1].strip()
             elif '<' in for_cond:
                 ending_point = for_cond.split('<')[1].strip()
             elif '>' in for_cond:
                 ending_point = for_cond.split('>')[1].strip()
-            
-            print(for_cond)
-            print("ending point: ", ending_point)
-            condition = in_for_split[1].replace(variable,starting_point)
 
-            print("condition", condition)
+            # # print(for_cond)
+            # print("ending point: ", ending_point)
+            condition = in_for_split[1].replace(variable, starting_point)
 
+            # print("condition", condition)
+
+            # Determine the step based on the update expression
             update = in_for_split[2]
             if '++' in update:
                 step = 1
             if '--' in update:
                 step = -1
-            
 
+            # Convert the loop into Python's range syntax
             line = f'theo({condition})' + '{\n' + ('\t' * (activeBrackets + 1)) + line + '}'
             if ending_point.isnumeric():
                 ending_point = ending_point if '=' not in condition else str(int(ending_point) + 1)
             else:
-                ending_point = ending_point if '=' not in condition else str(ending_point + "+1")
-        
-            
+                ending_point = ending_point if '=' not in condition else f'{ending_point} + 1'
+
             line = line.replace(words_with_parenthesis, f' {variable} in range({starting_point}, {ending_point}, {step})')
             inside_ForLoop = True
+            numOfForLoops += 1
+            brackets_inside_for.append(0)
             
 
         # for key in statement_replacements.keys():
@@ -249,6 +278,8 @@ def generate(code):
         #     else:
         #         line = line.replace(key, statement_replacements[key])
 
+       
+        
         line = replace_code(line, statement_replacements)
         
         if '=' in line:
@@ -268,13 +299,13 @@ def generate(code):
                         if '=' in item and item != '':
                             declare = item.split("=")
                             all_global_vars.append(declare[0].strip())
-            print("all global vars: ", all_global_vars)
+            # print("all global vars: ", all_global_vars)
             global_statement = ["global " + s for s in all_global_vars]
             line =  line + '\n\t' + '; '.join(global_statement) + '\n'
 
 
         pyfile.write(('\t'*activeBrackets) + line +'\n')
-        print(variables)
+        # print(variables)
             
         if inside_ForLoop:
             if for_iteration == 0:
@@ -286,7 +317,7 @@ def generate(code):
         if activeBrackets == 0 and line != "":
             global_vars.append(line)
             
-        print("global vars: ", global_vars)
+        # print("global vars: ", global_vars)
     pyfile.write("\nif __name__ == '__main__':\n    main()")
     pyfile.close()
 

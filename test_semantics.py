@@ -47,6 +47,8 @@ class SemanticAnalyzer:
                 self.handle_helm_switch(line_tokens, line_number)
             elif line_type == "FIRE_STATEMENT":
                 self.handle_fire_statement(line_tokens, line_number)
+            elif line_type == "END_BLOCK":
+                self.handle_end_block(line_tokens, line_number)
         #     print(f"Line {line_number} has type: {line_type}")
         # print(self.symbol_table)
         if self.errors:
@@ -65,6 +67,10 @@ class SemanticAnalyzer:
             if token.type == TT_OFFBOARD:
                 break
         return [token for token in filtered_tokens if token.type not in [TT_SLCOMMENT, TT_MLCOMMENT]]
+    
+    def handle_end_block(self, line_tokens, line_number):
+        if TT_ALT in [token.type for token in line_tokens] or TT_ALTHEO in [token.type for token in line_tokens] or TT_THEO in [token.type for token in line_tokens]:
+            self.errors.append(f"Improper Statement Placement: ALT or ALTHEO statements should be in a new line after the closing bracket. (line {line_number})")
 
     def handle_array_variable_assignment(self, line_tokens, line_number):
         variable_name = line_tokens[0].value
@@ -127,10 +133,9 @@ class SemanticAnalyzer:
     def handle_fire_statement(self, line_tokens, line_number):
         expression_tokens = line_tokens[1:-1]
 
-        for token in expression_tokens:
-            if token.type == TT_IDTFR:
-                if not self.is_variable_declared(token.value):
-                    self.errors.append(f"Undeclared Variable Error: Variable '{token.value}' is not declared. (line {line_number})")
+        if len(expression_tokens) == 1 and expression_tokens[0].type == TT_IDTFR:
+            if not self.is_variable_declared(expression_tokens[0].value):
+                self.errors.append(f"Undeclared Variable Error: Variable '{expression_tokens[0].value}' is not declared. (line {line_number})")
 
     def handle_single_variable_declaration(self, line_tokens, line_number):
         variable_type = line_tokens[0].type
@@ -338,11 +343,11 @@ class SemanticAnalyzer:
             self.errors.append(f"Undeclared Variable Error: Variable '{variable_name}' is not declared. (line {line_number})")
             return
         if function_name == "load":
-            expected_params = [TT_STRING_LIT] # type: ignore
+            expected_params = [TT_DOFFY_LIT]
             given_params = [line_tokens[4].type]
             function_return_type = "PINT"
         elif function_name == "len":
-            expected_params = [TT_STRING_LIT] # type: ignore
+            expected_params = [TT_DOFFY_LIT]
             given_params = [line_tokens[4].type]
             function_return_type = "PINT"
         else:
@@ -442,7 +447,7 @@ class SemanticAnalyzer:
         loop_var = line_tokens[3].value
         start_expr_tokens = []
 
-        i = 7  #can you modify this not to start at 7? since the loop 
+        i = 7
         while i < len(line_tokens) and line_tokens[i].type not in [TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL]:
             start_expr_tokens.append(line_tokens[i])
             i += 1
@@ -456,12 +461,43 @@ class SemanticAnalyzer:
             i += 1
 
         if not self.is_variable_declared(loop_var):
-            self.symbol_table[-1][loop_var] = {"type": TT_PINT, "function": False}
-        elif line_tokens[2].type != TT_PINT:
-            self.errors.append(f"Type Error: Loop variable '{loop_var}' must be of type {TT_PINT}. (line {line_number})")
-        
-        if not (self.evaluate_expression_type(start_expr_tokens) in [TT_PINT, TT_PINT_LIT] and self.evaluate_expression_type(end_expr_tokens) in [TT_PINT, TT_PINT_LIT]):
-            self.errors.append(f"Type Error: Loop bounds must be of type {TT_PINT_LIT}. (line {line_number})")
+            if line_tokens[2].type != TT_PINT:
+                self.errors.append(f"Type Error: Loop variable '{loop_var}' must be of type {TT_PINT}. (line {line_number})")
+            else:
+                self.symbol_table[-1][loop_var] = {"type": TT_PINT, "function": False}
+
+        start_expr_type = self.evaluate_expression_type(start_expr_tokens)
+        end_expr_type = self.evaluate_expression_type(end_expr_tokens)
+
+        if start_expr_type not in [TT_PINT, TT_PINT_LIT]:
+            if len(start_expr_tokens) > 1 and start_expr_tokens[0].type in [TT_IDTFR, TT_LEN] and start_expr_tokens[1].type == TT_LPAREN:
+                func_name = start_expr_tokens[0].value
+                if func_name == 'len':
+                    return
+                if func_name not in self.function_signatures:
+                    self.errors.append(f"Undeclared Function Error: Function '{func_name}' is not declared. (line {line_number})")
+                    return
+                if self.function_signatures[func_name]["return_type"] not in [TT_PINT, TT_PINT_LIT]:
+                    self.errors.append(f"Type Error: Function '{func_name}' must return {TT_PINT} or {TT_PINT_LIT}. (line {line_number})")
+                    return
+            else:
+                self.errors.append(f"Type Error: Loop start expression must be of type {TT_PINT} or {TT_PINT_LIT}. (line {line_number})")
+                return
+
+        if end_expr_type not in [TT_PINT, TT_PINT_LIT]:
+            if len(end_expr_tokens) > 1 and end_expr_tokens[0].type in [TT_IDTFR, TT_LEN] and end_expr_tokens[1].type == TT_LPAREN:
+                func_name = end_expr_tokens[0].value
+                if func_name == 'len':
+                    return
+                if func_name not in self.function_signatures:
+                    self.errors.append(f"Undeclared Function Error: Function '{func_name}' is not declared. (line {line_number})")
+                    return
+                if self.function_signatures[func_name]["return_type"] not in [TT_PINT, TT_PINT_LIT]:
+                    self.errors.append(f"Type Error: Function '{func_name}' must return {TT_PINT} or {TT_PINT_LIT}. (line {line_number})")
+                    return
+            else:
+                self.errors.append(f"Type Error: Loop end expression must be of type {TT_PINT} or {TT_PINT_LIT}. (line {line_number})")
+                return
     
     def contains_comparator(self, condition_tokens):
         if len(condition_tokens) == 1 and condition_tokens[0].type in [TT_REAL, TT_USOPP]:
@@ -483,16 +519,11 @@ class SemanticAnalyzer:
         if not isBull:
             self.errors.append(f"Type Error: THEO condition must be of type {TT_BULL}. (line {line_number})")
 
-        if TT_ALT in [token.type for token in line_tokens] or TT_ALTHEO in [token.type for token in line_tokens]:
-            self.errors.append(f"Improper Statement Placement: ALT or ALTHEO statements should be in a new line after the closing bracket. (line {line_number})")
-
     def handle_altheo_conditional(self, line_tokens, line_number):
         condition_tokens = line_tokens[2:-2]
         isBull = self.contains_comparator(condition_tokens)
         if not isBull:
             self.errors.append(f"Type Error: ALTHEO condition must be of type {TT_BULL}. (line {line_number})")
-        if TT_ALT in [token.type for token in line_tokens] or TT_ALTHEO in [token.type for token in line_tokens]:
-            self.errors.append(f"Improper Statement Placement: ALT or ALTHEO statements should be in a new line after the closing bracket. (line {line_number})")
 
     def handle_alt_conditional(self, line_tokens, line_number):
         pass  
@@ -500,8 +531,8 @@ class SemanticAnalyzer:
     def handle_helm_switch(self, line_tokens, line_number):
         expression_tokens = line_tokens[2:-2]
         expression_type = self.evaluate_expression_type(expression_tokens)
-        if expression_type not in [TT_PINT_LIT, TT_DOFFY_LIT, TT_PINT, TT_DOFFY]:
-            self.errors.append(f"Type Error: HELM expression must be of type {TT_PINT_LIT} or {TT_DOFFY_LIT}. (line {line_number})")
+        if expression_type not in [TT_PINT_LIT, TT_DOFFY_LIT, TT_PINT, TT_DOFFY, TT_FLEET, TT_FLEET_LIT, TT_BULL, TT_REAL, TT_USOPP]:
+            self.errors.append(f"Type Error: HELM expression must be of type {TT_PINT}, {TT_DOFFY}, {TT_FLEET}, {TT_BULL}. (line {line_number})")
     
     compatible_types = {
         TT_PINT: [TT_PINT_LIT],
@@ -619,7 +650,7 @@ def analyze_line(tokens):
             return "MULTIPLE_VARIABLE_DECLARATION"
         else:
             return "SINGLE_VARIABLE_DECLARATION"
-    elif tokens[0].type == TT_IDTFR and tokens[1].type == TT_ASSIGN and tokens[2].type == TT_IDTFR and tokens[3].type == TT_LPAREN:
+    elif tokens[0].type == TT_IDTFR and tokens[1].type == TT_ASSIGN and tokens[3].type == TT_LPAREN:
         return "VARIABLE_ASSIGNMENT_WITH_FUNCTION_CALL"
     elif tokens[0].type == TT_IDTFR and tokens[1].type == TT_ASSIGN:
         return "VARIABLE_ASSIGNMENT"
@@ -631,7 +662,7 @@ def analyze_line(tokens):
         return "FUNCTION_DEFINITION"
     elif len(tokens) == 1 and tokens[0].type == TT_LBRACKET:
         return "START_BLOCK"
-    elif len(tokens) == 1 and tokens[0].type == TT_RBRACKET:
+    elif tokens[0].type == TT_RBRACKET:
         return "END_BLOCK"
     elif tokens[0].type == TT_IDTFR and tokens[1].type == TT_LPAREN:
         return "FUNCTION_CALL"
