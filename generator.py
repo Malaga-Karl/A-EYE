@@ -171,18 +171,18 @@ def generate(code):
 
 
         if firstWord in ['pint', 'fleet', 'doffy', 'bull', 'void']:
-            line = extract_var_types(line, types_dict)
-            secondWord = line.split()[1]
-            if '(' in secondWord:
+            # secondWord = line.split()[1]
+            if activeBrackets == 0 and '(' in line:
                 words = line.split()
                 words[0] = 'def'
                 line = ' '.join(words)
-            else:
-                thirdWord = line.split()[2]
-                if '(' in thirdWord:
-                    words = line.split()
-                    words[0] = 'def'
-                    line = ' '.join(words)
+            # else:
+            #     thirdWord = line.split()[2]
+            #     if '(' in thirdWord:
+            #         words = line.split()
+            #         words[0] = 'def'
+            #         line = ' '.join(words)
+            line = extract_var_types(line, types_dict)
 
         print(types_dict) if types_dict else None
         if 'load' in line:
