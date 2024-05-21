@@ -83,6 +83,27 @@ def remove_space_before_bracket(line):
     # Remove space between closing parenthesis and opening bracket
     return re.sub(r'\)\s+\{', '){', line)
 
+def extract_var_types(line, types_dict):
+    data_type = None
+    if 'pint ' in line:
+        data_type = 'int'
+        line = line.replace('pint ', '')
+    elif 'fleet ' in line:
+        data_type = 'float'
+        line = line.replace('fleet ', '')
+    elif 'doffy ' in line:
+        data_type = 'str'
+        line = line.replace('doffy ', '')
+    elif 'bull ' in line:
+        data_type = 'bool'
+        line = line.replace('bull ', '')
+
+    if data_type:
+        variables = [var.split('=')[0].strip() for var in line.split(',')]
+        for var in variables:
+            types_dict[var] = data_type
+    return line
+
 def generate(code):
     # Split code by lines
     code = [line.strip() for line in code.split("\n")]
@@ -98,7 +119,8 @@ def generate(code):
     numOfForLoops = -1
 
     variables = {}
-    
+    types_dict = {}
+
     # Temporary variable counter: will start the count in t1 
     # temp_var_counter = 1
     # temp_vars = {}
@@ -149,6 +171,7 @@ def generate(code):
 
 
         if firstWord in ['pint', 'fleet', 'doffy', 'bull', 'void']:
+            line = extract_var_types(line, types_dict)
             secondWord = line.split()[1]
             if '(' in secondWord:
                 words = line.split()
@@ -161,6 +184,7 @@ def generate(code):
                     words[0] = 'def'
                     line = ' '.join(words)
 
+        print(types_dict) if types_dict else None
         if 'load' in line:
             segments = line.split(',')
             for j in range(len(segments)):
@@ -168,12 +192,12 @@ def generate(code):
                 if 'load' in segment:
                     var_name = segment.split('=')[0].strip().split()[-1]
                     prompt = re.findall(r'\".*?\"', segment)
-                    if firstWord == 'pint':
-                        load_replacement = f'{var_name} = int(show_custom_popup("[pint] " + {prompt[0]}))'
-                    elif firstWord == 'fleet':
-                        load_replacement = f'{var_name} = float(show_custom_popup("[fleet] " + {prompt[0]}))'
+                    if types_dict[var_name] == 'int':
+                        load_replacement = f'{var_name} = int(show_custom_popup("[ Pint ] " + {prompt[0]}))'
+                    elif types_dict[var_name] == 'float':
+                        load_replacement = f'{var_name} = float(show_custom_popup("[ Fleet ] " + {prompt[0]}))'
                     else:
-                        load_replacement = f'{var_name} = show_custom_popup("[doffy]" + {prompt[0]})'
+                        load_replacement = f'{var_name} = show_custom_popup("[ Doffy ]" + {prompt[0]})'
                     segments[j] = segment.replace(f'{var_name} = load({prompt[0]})', load_replacement, 1)
             line = ', '.join(segments)
 
