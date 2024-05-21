@@ -1,6 +1,7 @@
 import constants
 import re
 import os
+import keyword
 
 class Generator:
     def __init__(self, code):
@@ -40,6 +41,29 @@ statement_replacements = {
     'void'  : 'def',
     'loyal ': ''
 }
+python_keywords = set(keyword.kwlist)
+def preprocess_identifiers(code, keywords):
+    # Regex pattern for identifiers (assuming they follow Python's naming conventions)
+    identifier_pattern = re.compile(r'\b[a-zA-Z_]\w*\b')
+
+    def replace_identifier(match):
+        identifier = match.group(0)
+        if identifier in keywords:
+            return identifier + '_'
+        return identifier
+
+    segments = re.split(r'(".*?")', code)
+    new_segments = []
+
+    for segment in segments:
+        if segment.startswith('"') or segment.startswith("'"):
+            # Preserve string literals as they are
+            new_segments.append(segment)
+        else:
+            # Process non-string literal segments
+            new_segments.append(identifier_pattern.sub(replace_identifier, segment))
+
+    return ''.join(new_segments)
 
 def replace_code(line, replacements):
     # Split the line by keeping the delimiters (string quotes)
@@ -132,6 +156,9 @@ def generate(code):
         
         if line == "":
             continue
+
+        line = preprocess_identifiers(line, python_keywords)
+
         
         # Check for multiline comment start and end
         if '##' in code[i]:
