@@ -1,1 +1,4 @@
-fire
+Each person gets:
+24.6
+Remaining amount of object:
+3

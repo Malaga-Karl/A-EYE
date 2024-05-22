@@ -556,7 +556,10 @@ class SyntaxAnalyzer:
     def conditional(self):
         if not self.consume([TT_LPAREN]):return
         self.condition()
-        if not self.consume([TT_RPAREN]):return
+        if self.current_token.type == TT_RPAREN:
+            if not self.consume([TT_RPAREN]):return
+        else:
+            if not self.consume([TT_RPAREN, TT_AND, TT_ORO]):return
         if not self.consume([TT_LBRACKET]):return
         self.statement()
         self.home()
@@ -842,7 +845,10 @@ class SyntaxAnalyzer:
         if not self.consume([TT_NAY]):return
         if not self.consume([TT_LPAREN]):return
         self.negate()
-        if not self.consume([TT_RPAREN]):return
+        if self.current_token.type == TT_RPAREN:
+            if not self.consume([TT_RPAREN]):return
+        else:
+            if not self.consume([TT_RPAREN, TT_AND, TT_ORO]):return
 
     # 102 {IDENTIFIER, PINT_LIT, FLEET_LIT, DOFFY_LIT, “nay”, “(“, “len”, “load”, “[“}
     # 103 {IDENTIFIER, PINT_LIT, FLEET_LIT, DOFFY_LIT, BULL_LIT “nay”, “(“, “len”, “load”, “[“}

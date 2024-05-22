@@ -72,19 +72,15 @@ class SemanticAnalyzer:
     def handle_end_block(self, line_tokens, line_number):
         self.inLocal = False
 
-        # Iterate over each dictionary in the symbol table
         for symbol_dict in self.symbol_table:
-            # Identify keys to remove: "function" is True and "type" is not "function"
             keys_to_remove = [
                 key for key, value in symbol_dict.items() 
                 if value.get('function') and value.get('type') != 'function'
             ]
 
-            # Remove keys from the dictionary
             for key in keys_to_remove:
                 del symbol_dict[key]
 
-        # Check for improper statement placement
         if TT_ALT in [token.type for token in line_tokens] or TT_ALTHEO in [token.type for token in line_tokens] or TT_THEO in [token.type for token in line_tokens]:
             self.errors.append(f"Improper Statement Placement: ALT or ALTHEO statements should be in a new line after the closing bracket. (line {line_number})")
 
@@ -476,7 +472,7 @@ class SemanticAnalyzer:
 
     def handle_return_statement(self, line_tokens, line_number):
         if self.current_function is None:
-            self.errors.append(f"Return Error: 'return' statement is not inside a function. (line {line_number})")
+            self.errors.append(f"Return Error: 'Home' statement is not inside a function. (line {line_number})")
         else:
             expected_type = self.symbol_table[0][self.current_function]["return_type"]
             expression_tokens = line_tokens[1:-1]
@@ -488,6 +484,8 @@ class SemanticAnalyzer:
                     self.errors.append(f"Return Type Error: Function '{self.current_function}' should return type {expected_type} but got {expression_type}. (line {line_number})")
     
     def handle_four_loop(self, line_tokens, line_number):
+        self.inLocal = True
+
         loop_var = line_tokens[3].value
         start_expr_tokens = []
 
@@ -555,27 +553,37 @@ class SemanticAnalyzer:
         return False
 
     def handle_whale_loop(self, line_tokens, line_number):
+        self.inLocal = True
+
         condition_tokens = line_tokens[2:-2]
         isBull = self.contains_comparator(condition_tokens)
         if not isBull:
             self.errors.append(f"Type Error: WHALE loop condition must be of type {TT_BULL}. (line {line_number})")
 
     def handle_theo_conditional(self, line_tokens, line_number):
+        self.inLocal = True
+
         condition_tokens = line_tokens[2:-2]
         isBull = self.contains_comparator(condition_tokens)
         if not isBull:
             self.errors.append(f"Type Error: THEO condition must be of type {TT_BULL}. (line {line_number})")
 
     def handle_altheo_conditional(self, line_tokens, line_number):
+        self.inLocal = True
+
         condition_tokens = line_tokens[2:-2]
         isBull = self.contains_comparator(condition_tokens)
         if not isBull:
             self.errors.append(f"Type Error: ALTHEO condition must be of type {TT_BULL}. (line {line_number})")
 
     def handle_alt_conditional(self, line_tokens, line_number):
+        self.inLocal = True
+
         pass  
 
     def handle_helm_switch(self, line_tokens, line_number):
+        self.inLocal = True
+
         expression_tokens = line_tokens[2:-2]
         expression_type = self.evaluate_expression_type(expression_tokens)
         if expression_type not in [TT_PINT_LIT, TT_DOFFY_LIT, TT_PINT, TT_DOFFY, TT_FLEET, TT_FLEET_LIT, TT_BULL, TT_REAL, TT_USOPP]:
