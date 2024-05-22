@@ -65,7 +65,7 @@ def preprocess_identifiers(code, keywords):
 
     return ''.join(new_segments)
 
-def replace_code(line, replacements):
+def replace_code(line, replacements, types_dict):
     # Split the line by keeping the delimiters (string quotes)
     segments = re.split(r'(\".*?\")', line)
     new_segments = []
@@ -78,9 +78,26 @@ def replace_code(line, replacements):
             # Apply replacements on non-string literals
             for key, value in replacements.items():
                 segment = segment.replace(key, value)
+            # Check if it's a print statement and adjust boolean values accordingly
+            if 'print' in segment:
+                segment = adjust_print_booleans(segment, types_dict)
             new_segments.append(segment)
 
     return ''.join(new_segments)
+
+def adjust_print_booleans(segment, types_dict):
+    # Extract the variable being printed
+    match = re.search(r'print\((.*?)\)', segment)
+    if match:
+        var_name = match.group(1).strip()
+        if var_name in types_dict and types_dict[var_name] == 'bool':
+            # Replace the print statement with appropriate boolean value
+            segment = segment.replace(var_name, f"'real' if {var_name} else 'usopp'")
+        if var_name == 'True':
+            segment = segment.replace('True', "'real'")
+        elif var_name == 'False':
+            segment = segment.replace('False', "'usopp'")
+    return segment
 
 def nth_repl(s, sub, repl, n):
     find = s.find(sub)
@@ -106,6 +123,18 @@ def remove_dtye(line):
 def remove_space_before_bracket(line):
     # Remove space between closing parenthesis and opening bracket
     return re.sub(r'\)\s+\{', '){', line)
+
+def process_print_statements(line, types_dict):
+    if 'print(' in line:
+        segments = line.split('print(')
+        for i in range(1, len(segments)):
+            # Extract the variable/expression being printed
+            var_expression = segments[i].split(')', 1)[0].strip()
+            if var_expression in types_dict and types_dict[var_expression] == 'bool':
+                # Add the boolean conversion logic
+                segments[i] = f'(lambda x: "real" if x else "usopp")({var_expression})' + segments[i][len(var_expression):]
+        return 'print('.join(segments)
+    return line
 
 def extract_var_types(line, types_dict):
     data_type = None
@@ -181,7 +210,7 @@ def generate(code):
             # If there's an update statement for the current level of indentation, insert it
             if activeBrackets in for_update_dict:
                 update_statement = for_update_dict.pop(activeBrackets)
-                line = '\t' + update_statement + "\n" + line
+                line = '\t'+ update_statement + "\n" + line
 
         firstWord = line.split()[0] if len(line.split()) > 1 else ""
 
@@ -204,11 +233,11 @@ def generate(code):
                         prompt = var_declaration_match.group(3)
                         
                         if var_type == 'int':
-                            load_replacement = f'{var_name} = int(show_custom_popup("[ Pint ] " + {prompt}))'
+                            load_replacement = f'user_input=show_custom_popup("[ PINT ]" + {prompt[0]})\n\t{var_name} = (lambda x: int(x) if x.isdigit() else (print("[ Error ] Invalid input. Type Mismatchs") or exit()))(user_input)'
                         elif var_type == 'float':
-                            load_replacement = f'{var_name} = float(show_custom_popup("[ Fleet ] " + {prompt}))'
+                            load_replacement = f'user_input=show_custom_popup("[ FLEET ] " + {prompt[0]})\n\t{var_name} = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
                         else:
-                            load_replacement = f'{var_name} = show_custom_popup("[ Doffy ] " + {prompt})'
+                            load_replacement = f'{var_name} = show_custom_popup("[ DOFFY ] " + {prompt})'
                             
                         segments[j] = load_replacement
                         types_dict[var_name] = var_type  # Add to types_dict if newly declared
@@ -218,11 +247,11 @@ def generate(code):
                         if var_name in types_dict:
                             var_type = types_dict[var_name]
                             if var_type == 'int':
-                                load_replacement = f'{var_name} = int(show_custom_popup("[ Pint ] " + {prompt[0]}))'
+                                load_replacement = f'user_input=show_custom_popup("[ PINT ]" + {prompt[0]})\n\t{var_name} = (lambda x: int(x) if x.isdigit() else (print("[ Error ] Invalid input. Type Mismatchs") or exit()))(user_input)'
                             elif var_type == 'float':
-                                load_replacement = f'{var_name} = float(show_custom_popup("[ Fleet ] " + {prompt[0]}))'
+                                load_replacement = f'user_input=show_custom_popup("[ FLEET ] " + {prompt[0]})\n\t{var_name} = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
                             else:
-                                load_replacement = f'{var_name} = show_custom_popup("[ Doffy ] " + {prompt[0]})'
+                                load_replacement = f'{var_name} = show_custom_popup("[ DOFFY ] " + {prompt[0]})'
                             segments[j] = segment.replace(f'{var_name} = load({prompt[0]})', load_replacement, 1)
             
             line = ', '.join(segments)
@@ -283,7 +312,7 @@ def generate(code):
             pyfile.write(('\t' * activeBrackets) + init_statement + '\n')
             line = while_condition
 
-        line = replace_code(line, statement_replacements)
+        line = replace_code(line, statement_replacements, types_dict)
         
         if '=' in line:
             decl = [item.strip() for item in line.split(";") if item != '']
