@@ -50,7 +50,7 @@ class SemanticAnalyzer:
                 self.handle_fire_statement(line_tokens, line_number)
             elif line_type == "END_BLOCK":
                 self.handle_end_block(line_tokens, line_number)
-            print(f"Line {line_number} has type: {line_type}")
+        #     print(f"Line {line_number} has type: {line_type}")
         # print(self.symbol_table)
         if self.errors:
             return self.errors
@@ -86,7 +86,6 @@ class SemanticAnalyzer:
 
 
     def handle_array_variable_assignment(self, line_tokens, line_number):
-        print(self.symbol_table)
         variable_name = line_tokens[0].value
 
         if variable_name not in self.symbol_table[0]:
@@ -417,6 +416,7 @@ class SemanticAnalyzer:
 
     def handle_function_definition(self, line_tokens, line_number):
         self.inLocal = True
+
         function_name = line_tokens[1].value
         return_type = line_tokens[0].type
         if function_name in self.symbol_table[-1]:
@@ -435,7 +435,7 @@ class SemanticAnalyzer:
                 if line_tokens[i].type in [TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL]:
                     param_type = line_tokens[i].type
                     param_name = line_tokens[i + 1].value
-                    function_scope[param_name] = {"type": param_type, "function": False}
+                    function_scope[param_name] = {"type": param_type, "function": True}
                     param_list.append(param_type)
                 i += 1
             self.function_signatures[function_name] = param_list
