@@ -43,7 +43,7 @@ onboard
         theo(num < 20){
             fire("less 20");
         }
-        altheo(num == 20){
+        altheo(num == 20 != 30){
             fire("is 20");
         }
         alt {
