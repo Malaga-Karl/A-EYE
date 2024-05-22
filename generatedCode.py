@@ -1,11 +1,9 @@
+from custom_popup_input import show_custom_popup
+
 def main():
-    a = 10; 
-    b = 12; 
-    c = 13; 
-    d = a + b + c; 
-    if(d == 35):
-        print("Working"); 
-    
+	
+
+	print("fire"); 
 
 
 if __name__ == '__main__':
