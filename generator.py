@@ -39,7 +39,7 @@ statement_replacements = {
     'chest': 'case',
     'dagger': 'case _',
     'void'  : 'def',
-    'loyal ': ''
+    'loyal ': '',
 }
 python_keywords = set(keyword.kwlist)
 def preprocess_identifiers(code, keywords):
@@ -233,7 +233,7 @@ def generate(code):
                         prompt = var_declaration_match.group(3)
                         
                         if var_type == 'int':
-                            load_replacement = f'user_input=show_custom_popup("[ PINT ]" + {prompt[0]})\n\t{var_name} = (lambda x: int(x) if x.isdigit() else (print("[ Error ] Invalid input. Type Mismatchs") or exit()))(user_input)'
+                            load_replacement = f'user_input=show_custom_popup("[ PINT ] " + {prompt[0]})\n\t{var_name} = (lambda x: (int(x) if isinstance((result := int(x)), int) else result) if (isinstance((result := int(x)), int) or True) else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
                         elif var_type == 'float':
                             load_replacement = f'user_input=show_custom_popup("[ FLEET ] " + {prompt[0]})\n\t{var_name} = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
                         else:
@@ -247,7 +247,7 @@ def generate(code):
                         if var_name in types_dict:
                             var_type = types_dict[var_name]
                             if var_type == 'int':
-                                load_replacement = f'user_input=show_custom_popup("[ PINT ]" + {prompt[0]})\n\t{var_name} = (lambda x: int(x) if x.isdigit() else (print("[ Error ] Invalid input. Type Mismatchs") or exit()))(user_input)'
+                                load_replacement = f'user_input=show_custom_popup("[ PINT ] " + {prompt[0]})\n\t{var_name} = (lambda x: int(x) if x.lstrip("-").isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
                             elif var_type == 'float':
                                 load_replacement = f'user_input=show_custom_popup("[ FLEET ] " + {prompt[0]})\n\t{var_name} = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
                             else:
@@ -270,6 +270,21 @@ def generate(code):
                     isParam = False
                 if letter == ',' and not isParam and not isArray:
                     line = line.replace(letter, "; ", 1)
+
+        if 'fire' in line:
+            # Define a regex pattern to match fire function calls with arguments
+            pattern = r'fire\((.*?)\)'
+
+            def replace_fire(match):
+                arg = match.group(1)
+                # Handle the special case for "\n"
+                if arg == '"\\n"':
+                    return f'print("\\n", end="")'
+                else:
+                    return f'print({arg}, end="")'
+            
+             # Perform the replacement using sub() function with a replacement function
+            line = re.sub(pattern, replace_fire, line)
 
         if 'four' in line:
             activeParenthesis = 0
@@ -346,4 +361,3 @@ def generate(code):
     pyfile.close()
 
     os.system(f"python -u \"{os.getcwd()}/generatedCode.py\" > \"{os.getcwd()}/output.txt\"")
-

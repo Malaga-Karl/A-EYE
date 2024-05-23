@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-import lexer
+import lexer    
 import syntax
 import semantics
 import imageio
