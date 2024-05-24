@@ -168,6 +168,7 @@ def generate(code):
     global_vars = []
     linenum = 2
 
+
     variables = {}
     types_dict = {}
     for_update_dict = {}

@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-import lexer    
+import lexer
 import syntax
 import semantics
 import imageio
@@ -65,8 +65,13 @@ def analyze_syntax():
         terminal_text.config(state="disabled")
     else:
         output = open("output.txt", "r")
+        result = output.read()
+        if '[ Error ]' in result:
+            terminal_text.insert(tk.END, result + "\n")
+            terminal_text.tag_configure(foreground="light red")
+        else:
+            terminal_text.insert(tk.END, result + "\n")
         terminal_text.insert(tk.END, syntax_result + "\n")
-        terminal_text.insert(tk.END, output.read() + "\n")
         terminal_text.config(state="disabled")
         if syntax_result == "Syntax analysis successful":
             terminal_text.tag_configure("success", foreground="light green")
