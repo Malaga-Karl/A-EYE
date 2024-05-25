@@ -3,11 +3,23 @@ from custom_popup_input import show_custom_popup
 def main():
 	
 
-	string1 = show_custom_popup("[ DOFFY ] " + "Enter first string: "); 
-	string2 = show_custom_popup("[ DOFFY ] " + "Enter second string: "); 
-	print("Concatenated string: ", end=""); 
-	print(string1, end=""); 
-	print(string2, end=""); 
+	user_input=show_custom_popup("[ PINT ] " + "Enter Number of Steps:")
+	row = (lambda x: int(x) if x.lstrip("-").isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input); 
+	i = 1
+	while i <= row:
+		j = 1
+		while j <= row:
+			if (j <= i):
+				print("*", end=""); 
+			
+			else :
+				print(" ", end=""); 
+			
+			j+=1
+
+		print("\n", end=""); 
+		i+=1
+
 
 
 if __name__ == '__main__':
