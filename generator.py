@@ -170,7 +170,7 @@ def generate(code):
     linenum = 2
 
 
-    variables = {}
+    # variables = {}
     types_dict = {}
     for_update_dict = {}
 
@@ -357,14 +357,24 @@ def generate(code):
             pyfile.write(('\t' * activeBrackets) + init_statement + '\n')
             line = while_condition
 
-        line = replace_code(line, statement_replacements, types_dict)
-        
         if '=' in line:
             decl = [item.strip() for item in line.split(";") if item != '']
             for item in decl:
                 if '=' in item:
                     declare = item.split("=")
-                    variables[declare[0].strip()] = declare[1].strip()
+                    if declare[0].strip() in types_dict:
+                        if types_dict[declare[0].strip()] == 'int':
+                            line = line.replace(declare[1], f'int({declare[1]})')
+                        elif types_dict[declare[0].strip()] == 'float':
+                            line = line.replace(declare[1], f'float({declare[1]})')
+                        elif types_dict[declare[0].strip()] == 'str':
+                            line = line.replace(declare[1], f'str({declare[1]})')
+                        elif types_dict[declare[0].strip()] == 'bool':
+                            line = line.replace(declare[1], f'bool({declare[1]})')
+                    # variables[declare[0].strip()] = declare[1].strip()
+                    
+        line = replace_code(line, statement_replacements, types_dict)
+        
         
         if activeBrackets == 0 and hadOBracket:
             all_global_vars = []
