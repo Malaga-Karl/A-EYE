@@ -22,6 +22,7 @@ statement_replacements = {
     'sail'  : 'continue',
     'real' : 'True',
     'usopp' : 'False',
+    'and' : 'and',
     'oro' : 'or',
     'nay' : 'not',
     '{' : ':',
@@ -48,7 +49,7 @@ def preprocess_identifiers(code, keywords):
 
     def replace_identifier(match):
         identifier = match.group(0)
-        if identifier in keywords:
+        if identifier in keywords and identifier not in statement_replacements.keys():
             return identifier + '_'
         return identifier
 
