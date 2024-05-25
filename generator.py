@@ -1,6 +1,7 @@
 import constants
 import re
 import os
+import keyword
 
 class Generator:
     def __init__(self, code):
@@ -21,6 +22,7 @@ statement_replacements = {
     'sail'  : 'continue',
     'real' : 'True',
     'usopp' : 'False',
+    'and' : 'and',
     'oro' : 'or',
     'nay' : 'not',
     '{' : ':',
@@ -38,10 +40,33 @@ statement_replacements = {
     'chest': 'case',
     'dagger': 'case _',
     'void'  : 'def',
-    'loyal ': ''
+    'loyal ': '',
 }
+python_keywords = set(keyword.kwlist)
+def preprocess_identifiers(code, keywords):
+    # Regex pattern for identifiers (assuming they follow Python's naming conventions)
+    identifier_pattern = re.compile(r'\b[a-zA-Z_]\w*\b')
 
-def replace_code(line, replacements):
+    def replace_identifier(match):
+        identifier = match.group(0)
+        if identifier in keywords and identifier not in statement_replacements.keys():
+            return identifier + '_'
+        return identifier
+
+    segments = re.split(r'(".*?")', code)
+    new_segments = []
+
+    for segment in segments:
+        if segment.startswith('"') or segment.startswith("'"):
+            # Preserve string literals as they are
+            new_segments.append(segment)
+        else:
+            # Process non-string literal segments
+            new_segments.append(identifier_pattern.sub(replace_identifier, segment))
+
+    return ''.join(new_segments)
+
+def replace_code(line, replacements, types_dict):
     # Split the line by keeping the delimiters (string quotes)
     segments = re.split(r'(\".*?\")', line)
     new_segments = []
@@ -54,9 +79,26 @@ def replace_code(line, replacements):
             # Apply replacements on non-string literals
             for key, value in replacements.items():
                 segment = segment.replace(key, value)
+            # Check if it's a print statement and adjust boolean values accordingly
+            if 'print' in segment:
+                segment = adjust_print_booleans(segment, types_dict)
             new_segments.append(segment)
 
     return ''.join(new_segments)
+
+def adjust_print_booleans(segment, types_dict):
+    # Extract the variable being printed
+    match = re.search(r'print\((.*?)\)', segment)
+    if match:
+        var_name = match.group(1).strip()
+        if var_name in types_dict and types_dict[var_name] == 'bool':
+            # Replace the print statement with appropriate boolean value
+            segment = segment.replace(var_name, f"'real' if {var_name} else 'usopp'")
+        if var_name == 'True':
+            segment = segment.replace('True', "'real'")
+        elif var_name == 'False':
+            segment = segment.replace('False', "'usopp'")
+    return segment
 
 def nth_repl(s, sub, repl, n):
     find = s.find(sub)
@@ -70,18 +112,30 @@ def nth_repl(s, sub, repl, n):
 
 def remove_dtye(line):
     if 'pint ' in line:
-        line = line.replace('pint', '')
+        line = line.replace('pint ', '')
     elif 'fleet ' in line:
-        line = line.replace('fleet', '')
+        line = line.replace('fleet ', '')
     elif 'doffy ' in line:
-        line = line.replace('doffy', '')
+        line = line.replace('doffy ', '')
     elif 'bull ' in line:
-        line = line.replace('bull', '')
+        line = line.replace('bull ', '')
     return line
 
 def remove_space_before_bracket(line):
     # Remove space between closing parenthesis and opening bracket
     return re.sub(r'\)\s+\{', '){', line)
+
+def process_print_statements(line, types_dict):
+    if 'print(' in line:
+        segments = line.split('print(')
+        for i in range(1, len(segments)):
+            # Extract the variable/expression being printed
+            var_expression = segments[i].split(')', 1)[0].strip()
+            if var_expression in types_dict and types_dict[var_expression] == 'bool':
+                # Add the boolean conversion logic
+                segments[i] = f'(lambda x: "real" if x else "usopp")({var_expression})' + segments[i][len(var_expression):]
+        return 'print('.join(segments)
+    return line
 
 def extract_var_types(line, types_dict):
     data_type = None
@@ -112,19 +166,14 @@ def generate(code):
     lastLine = code.index("offboard")
     activeBrackets = 0
     inside_comment = False
-    inside_ForLoop = False
-    for_iteration = 0
     global_vars = []
-    brackets_inside_for = []
-    numOfForLoops = -1
+    linenum = 2
+
 
     variables = {}
     types_dict = {}
+    for_update_dict = {}
 
-    # Temporary variable counter: will start the count in t1 
-    # temp_var_counter = 1
-    # temp_vars = {}
-    # Iterate through lines
     pyfile.write("from custom_popup_input import show_custom_popup\n\n")
     for i in range(firstLine, lastLine):
         hadOBracket = False
@@ -132,7 +181,9 @@ def generate(code):
         
         if line == "":
             continue
-        
+
+        line = preprocess_identifiers(line, python_keywords)
+
         # Check for multiline comment start and end
         if '##' in code[i]:
             if '##' in code[i] and not inside_comment:
@@ -153,52 +204,58 @@ def generate(code):
         line = remove_space_before_bracket(line)
         # Check for brackets
         if '{' in line:
-            # print("active brackets: ", activeBrackets)
-            # print("inside for loop: ", brackets_inside_for[numOfForLoops])
             hadOBracket = True
-            if inside_ForLoop:
-                brackets_inside_for[numOfForLoops] += 1
+            print('bracket detected: ', line, activeBrackets)
         if '}' in line:
-            if inside_ForLoop and brackets_inside_for[numOfForLoops] == 0:
-                activeBrackets -=2
-                inside_ForLoop = False
-            else:
-                activeBrackets -= 1
-        
+            activeBrackets -= 1
+
+            # If there's an update statement for the current level of indentation, insert it
+            if activeBrackets in for_update_dict:
+                update_statement = for_update_dict.pop(activeBrackets)
+                line = '\t'+ update_statement + "\n" + line
 
         firstWord = line.split()[0] if len(line.split()) > 1 else ""
-        
-
 
         if firstWord in ['pint', 'fleet', 'doffy', 'bull', 'void']:
-            # secondWord = line.split()[1]
             if activeBrackets == 0 and '(' in line:
                 words = line.split()
                 words[0] = 'def'
-                line = ' '.join(words)
-            # else:
-            #     thirdWord = line.split()[2]
-            #     if '(' in thirdWord:
-            #         words = line.split()
-            #         words[0] = 'def'
-            #         line = ' '.join(words)
+                line = ' '.join(words)            
             line = extract_var_types(line, types_dict)
-
-        print(types_dict) if types_dict else None
+        
         if 'load' in line:
             segments = line.split(',')
             for j in range(len(segments)):
                 segment = segments[j]
                 if 'load' in segment:
-                    var_name = segment.split('=')[0].strip().split()[-1]
-                    prompt = re.findall(r'\".*?\"', segment)
-                    if types_dict[var_name] == 'int':
-                        load_replacement = f'{var_name} = int(show_custom_popup("[ Pint ] " + {prompt[0]}))'
-                    elif types_dict[var_name] == 'float':
-                        load_replacement = f'{var_name} = float(show_custom_popup("[ Fleet ] " + {prompt[0]}))'
+                    var_declaration_match = re.match(r'(int|float|str)\s+(\w+)\s*=\s*load\((\".*?\")\)', segment)
+                    if var_declaration_match:
+                        var_type = var_declaration_match.group(1)
+                        var_name = var_declaration_match.group(2)
+                        prompt = var_declaration_match.group(3)
+                        
+                        if var_type == 'int':
+                            load_replacement = f'user_input=show_custom_popup("[ PINT ] " + {prompt[0]})\n\t{var_name} = (lambda x: (int(x) if isinstance((result := int(x)), int) else result) if (isinstance((result := int(x)), int) or True) else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
+                        elif var_type == 'float':
+                            load_replacement = f'user_input=show_custom_popup("[ FLEET ] " + {prompt[0]})\n\t{var_name} = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
+                        else:
+                            load_replacement = f'{var_name} = show_custom_popup("[ DOFFY ] " + {prompt})'
+                            
+                        segments[j] = load_replacement
+                        types_dict[var_name] = var_type  # Add to types_dict if newly declared
                     else:
-                        load_replacement = f'{var_name} = show_custom_popup("[ Doffy ]" + {prompt[0]})'
-                    segments[j] = segment.replace(f'{var_name} = load({prompt[0]})', load_replacement, 1)
+                        var_name = segment.split('=')[0].strip().split()[-1]
+                        prompt = re.findall(r'\".*?\"', segment)
+                        if var_name in types_dict:
+                            var_type = types_dict[var_name]
+                            if var_type == 'int':
+                                load_replacement = f'user_input=show_custom_popup("[ PINT ] " + {prompt[0]})\n\t{var_name} = (lambda x: int(x) if x.lstrip("-").isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
+                            elif var_type == 'float':
+                                load_replacement = f'user_input=show_custom_popup("[ FLEET ] " + {prompt[0]})\n\t{var_name} = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
+                            else:
+                                load_replacement = f'{var_name} = show_custom_popup("[ DOFFY ] " + {prompt[0]})'
+                            segments[j] = segment.replace(f'{var_name} = load({prompt[0]})', load_replacement, 1)
+            
             line = ', '.join(segments)
 
         if ',' in line:
@@ -216,16 +273,54 @@ def generate(code):
                 if letter == ',' and not isParam and not isArray:
                     line = line.replace(letter, "; ", 1)
 
+        if 'fire' in line:
+            # Define a regex pattern to match fire function calls with arguments
+            pattern = r'fire\((.*)\)'
+
+            def find_matching_parenthesis(s, start_index):
+                stack = 1
+                for i in range(start_index + 1, len(s)):
+                    if s[i] == '(':
+                        stack += 1
+                    elif s[i] == ')':
+                        stack -= 1
+                    if stack == 0:
+                        return i
+                return -1
+
+            def replace_fire(match):
+                arg_start = match.start(1)
+                arg_end = find_matching_parenthesis(line, arg_start - 1)
+                if arg_end == -1:
+                    return match.group(0)  # No match found, return original string
+                
+                arg = line[arg_start:arg_end].strip()
+                print(arg)
+                # Handle the special case for "\n"
+                if arg == '"\\n"':
+                    return 'print("\\n", end="")'
+                else:
+                    return f'print({arg}, end="")'
+            
+            def custom_sub(line):
+                matches = list(re.finditer(pattern, line))
+                result = []
+                last_end = 0
+                for match in matches:
+                    start, end = match.span()
+                    result.append(line[last_end:start])
+                    result.append(replace_fire(match))
+                    last_end = end
+                result.append(line[last_end:])
+                return ''.join(result)
+            
+            line = custom_sub(line)
 
         if 'four' in line:
             activeParenthesis = 0
             words_inside_for_loop = ''
             four_index = line.index('four')
-            # Trim the substring starting from the end of 'four' to remove excess spaces and opening brace
             four_subset = line[four_index+4:].strip().rstrip('{')
-            # print("four_subset: ", four_subset)
-
-            # Correctly identify the for loop condition by handling nested parentheses
             for char in four_subset:
                 if char == '(' and activeParenthesis == 0:
                     activeParenthesis += 1
@@ -240,75 +335,32 @@ def generate(code):
                 else:
                     words_inside_for_loop += char
 
-            # print("words inside for: ", words_inside_for_loop)
-            words_with_parenthesis = '(' + words_inside_for_loop + ')'
-
-            for_iteration = 0
-
-            # Split the for loop components and strip excess spaces
             in_for_split = [item.strip() for item in words_inside_for_loop.split(';')]
 
             for_decl = in_for_split[0].strip()
             for_cond = in_for_split[1].strip()
             for_update = in_for_split[2].strip()
-
-            # Extract starting point and variable name
-            starting_point = for_decl.split('=')[1].strip()
-            variable = remove_dtye(for_decl.split('=')[0]).strip()
-            # print("starting point: ", starting_point)
-            # print("variable: ", variable)
-
-            # Determine the ending point based on the condition
-            if '=' in for_cond:
-                ending_point = for_cond.split('=')[1].strip()
-            elif '<' in for_cond:
-                ending_point = for_cond.split('<')[1].strip()
-            elif '>' in for_cond:
-                ending_point = for_cond.split('>')[1].strip()
-
-            # # print(for_cond)
-            # print("ending point: ", ending_point)
-            condition = in_for_split[1].replace(variable, starting_point)
-
-            # print("condition", condition)
-
-            # Determine the step based on the update expression
-            update = in_for_split[2]
-            if '++' in update:
-                step = 1
-            if '--' in update:
-                step = -1
-
-            # Convert the loop into Python's range syntax
-            line = f'theo({condition})' + '{\n' + ('\t' * (activeBrackets + 1)) + line + '}'
-            if ending_point.isnumeric():
-                ending_point = ending_point if '=' not in condition else str(int(ending_point) + 1)
-            else:
-                ending_point = ending_point if '=' not in condition else f'{ending_point} + 1'
-
-            line = line.replace(words_with_parenthesis, f' {variable} in range({starting_point}, {ending_point}, {step})')
-            inside_ForLoop = True
-            numOfForLoops += 1
-            brackets_inside_for.append(0)
             
+            # Store the update statement with the current active bracket level as the key
+            for_update_dict[activeBrackets] = for_update
 
-        # for key in statement_replacements.keys():
-        #     if "\"" in line:
-        #         first_quote = line.find("\"") + 1
-        #         last_quote = line.rfind("\"")
-        #         prequote_substring = line[:first_quote]
-        #         postquote_substring = line[last_quote:]
-        #         line = prequote_substring.replace(key, statement_replacements[key]) + line[first_quote:last_quote] + postquote_substring.replace(key, statement_replacements[key])
-        #     else:
-        #         line = line.replace(key, statement_replacements[key])
+            # Split for_decl to extract the variable and its initialization
+            var_name, init_value = for_decl.split("=")
+            var_name = remove_dtye(var_name.strip())
+            init_value = init_value.strip()
 
-       
-        
-        line = replace_code(line, statement_replacements)
+            # Create the initialization statement and the while loop condition
+            init_statement = f"{var_name} = {init_value}"
+            while_condition = f"while {for_cond}:"
+
+            # Write the initialization statement and replace the `for` loop line with the `while` loop line
+            pyfile.write(('\t' * activeBrackets) + init_statement + '\n')
+            line = while_condition
+
+        line = replace_code(line, statement_replacements, types_dict)
         
         if '=' in line:
             decl = [item.strip() for item in line.split(";") if item != '']
-
             for item in decl:
                 if '=' in item:
                     declare = item.split("=")
@@ -323,26 +375,19 @@ def generate(code):
                         if '=' in item and item != '':
                             declare = item.split("=")
                             all_global_vars.append(declare[0].strip())
-            # print("all global vars: ", all_global_vars)
             global_statement = ["global " + s for s in all_global_vars]
             line =  line + '\n\t' + '; '.join(global_statement) + '\n'
 
-
         pyfile.write(('\t'*activeBrackets) + line +'\n')
-        # print(variables)
+        linenum += 1
             
-        if inside_ForLoop:
-            if for_iteration == 0:
-                activeBrackets += 1
-            for_iteration += 1
         if hadOBracket:
             activeBrackets += 1
         
         if activeBrackets == 0 and line != "":
             global_vars.append(line)
             
-        # print("global vars: ", global_vars)
     pyfile.write("\nif __name__ == '__main__':\n    main()")
     pyfile.close()
 
-    os.system(f"python -u \"{os.getcwd()}\generatedCode.py\" > \"{os.getcwd()}\output.txt\"")
+    os.system(f"python -u \"{os.getcwd()}/generatedCode.py\" > \"{os.getcwd()}/output.txt\"")

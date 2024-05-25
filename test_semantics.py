@@ -10,6 +10,7 @@ class SemanticAnalyzer:
         self.current_function = None
         self.function_signatures = {}
         self.inLocal = False
+        self.inConLoops = False
 
     def analyze(self, tokens):
         tokens = self.filter_tokens(tokens)
@@ -50,7 +51,7 @@ class SemanticAnalyzer:
                 self.handle_fire_statement(line_tokens, line_number)
             elif line_type == "END_BLOCK":
                 self.handle_end_block(line_tokens, line_number)
-            print(f"Line {line_number} has type: {line_type}")
+            # print(f"Line {line_number} has type: {line_type}")
         # print(self.symbol_table)
         if self.errors:
             return self.errors
@@ -73,20 +74,27 @@ class SemanticAnalyzer:
         self.inLocal = False
 
         for symbol_dict in self.symbol_table:
-            keys_to_remove = [
-                key for key, value in symbol_dict.items() 
-                if value.get('function') and value.get('type') != 'function'
-            ]
+            if self.inConLoops:
+                keys_to_remove = [
+                    key for key, value in symbol_dict.items() 
+                    if value.get('inConLoops', False)
+                ]
+            else:
+                keys_to_remove = [
+                    key for key, value in symbol_dict.items() 
+                    if value.get('function') and value.get('type') != 'function'
+                ]
 
             for key in keys_to_remove:
                 del symbol_dict[key]
+
+        self.inConLoops = False
 
         if TT_ALT in [token.type for token in line_tokens] or TT_ALTHEO in [token.type for token in line_tokens] or TT_THEO in [token.type for token in line_tokens]:
             self.errors.append(f"Improper Statement Placement: ALT or ALTHEO statements should be in a new line after the closing bracket. (line {line_number})")
 
 
     def handle_array_variable_assignment(self, line_tokens, line_number):
-        print(self.symbol_table)
         variable_name = line_tokens[0].value
 
         if variable_name not in self.symbol_table[0]:
@@ -141,11 +149,8 @@ class SemanticAnalyzer:
                 self.errors.append(f"Type Mismatch in Expression: Expecting {variable_type}, double check the expression. (line {line_number})")
             else:
                 self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the assigned expression is of type {expression_type}. (line {line_number})")
-        else:
-            if self.inLocal == True: 
-                self.symbol_table[-1][variable_name] = {"type": variable_type, "function": True, "loyal": True}
-            else:
-                self.symbol_table[-1][variable_name] = {"type": variable_type, "function": False, "loyal": True}
+        else: 
+            self.symbol_table[-1][variable_name] = {"type": variable_type, "function": self.inLocal, "inConLoops": self.inConLoops, "loyal": True,}
 
     def handle_fire_statement(self, line_tokens, line_number):
         expression_tokens = line_tokens[1:-1]
@@ -188,10 +193,7 @@ class SemanticAnalyzer:
                     self.errors.append(f"Type Error: Array '{variable_name}' element type {element_type} does not match declared type {variable_type}. (line {line_number})")
                     return
 
-            if self.inLocal == True: 
-                self.symbol_table[-1][variable_name] = {"type": variable_type, "function": True, "size": len(elements), "array": True}
-            else:
-                self.symbol_table[-1][variable_name] = {"type": variable_type, "function": False,"size": len(elements), "array": True}
+            self.symbol_table[-1][variable_name] = {"type": variable_type, "function": self.inLocal, "inConLoops": self.inConLoops, "size": len(elements), "array": True}
             return
 
         expression_tokens = line_tokens[3:-1]
@@ -240,10 +242,7 @@ class SemanticAnalyzer:
             if not self.is_type_compatible(variable_type, function_return_type):
                 self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the function '{function_name}' returns type {function_return_type}. (line {line_number})")
             else:
-                if self.inLocal == True: 
-                    self.symbol_table[-1][variable_name] = {"type": variable_type, "function": True}
-                else:
-                    self.symbol_table[-1][variable_name] = {"type": variable_type, "function": False}
+                self.symbol_table[-1][variable_name] = {"type": variable_type, "function": self.inLocal, "inConLoops": self.inConLoops}
         else:
             expression_type = self.evaluate_expression_type(expression_tokens)
             if not self.is_type_compatible(variable_type, expression_type):
@@ -252,10 +251,7 @@ class SemanticAnalyzer:
                 else:
                     self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the assigned expression is of type {expression_type}. (line {line_number})")
             else:
-                if self.inLocal == True: 
-                    self.symbol_table[-1][variable_name] = {"type": variable_type, "function": True}
-                else:
-                    self.symbol_table[-1][variable_name] = {"type": variable_type, "function": False}
+                self.symbol_table[-1][variable_name] = {"type": variable_type, "function": self.inLocal, "inConLoops": self.inConLoops}
 
     def is_type_compatible(self, expected_type, actual_type):
         if expected_type == actual_type:
@@ -273,20 +269,52 @@ class SemanticAnalyzer:
     def handle_multiple_variable_declaration(self, line_tokens, line_number):
         variable_type = line_tokens[0].type
         i = 1  
+
         while i < len(line_tokens):
-            if line_tokens[i].type == TT_IDTFR: 
+            if line_tokens[i].type == TT_IDTFR:
                 variable_name = line_tokens[i].value
+
                 if variable_name in self.symbol_table[-1]:
                     self.errors.append(f"Redeclaration Error: Variable '{variable_name}' is already declared. (line {line_number})")
                     return
+
                 if i + 1 < len(line_tokens) and line_tokens[i + 1].type == TT_ASSIGN:
                     expression_tokens = []
                     function_return_type = variable_type
-                    i += 2 
+                    i += 2
+
+                    if i < len(line_tokens) and line_tokens[i].type == TT_LSBRACKET:
+                        i += 1
+                        elements = []
+                        current_element = []
+
+                        while i < len(line_tokens):
+                            if line_tokens[i].type in [TT_COMMA, TT_RSBRACKET]:
+                                if current_element:
+                                    elements.append(current_element)
+                                    current_element = []
+                                if line_tokens[i].type == TT_RSBRACKET:
+                                    break
+                            else:
+                                current_element.append(line_tokens[i])
+                            i += 1
+
+                        for element_tokens in elements:
+                            element_type = self.evaluate_expression_type(element_tokens)
+                            if not self.is_type_compatible(variable_type, element_type):
+                                self.errors.append(f"Type Error: Array '{variable_name}' element type {element_type} does not match declared type {variable_type}. (line {line_number})")
+                                return
+
+                        self.symbol_table[-1][variable_name] = {"type": variable_type, "function": self.inLocal, "inConLoops": self.inConLoops, "size": len(elements), "array": True}
+                        if i < len(line_tokens) and line_tokens[i].type == TT_SMCLN:
+                            i += 1
+                        continue
+
                     while i < len(line_tokens) and line_tokens[i].type != TT_COMMA and line_tokens[i].type != TT_SMCLN:
                         expression_tokens.append(line_tokens[i])
                         i += 1
-                    if expression_tokens[0].type == TT_LOAD or expression_tokens[0].type == TT_LEN:
+
+                    if expression_tokens and expression_tokens[0].type == TT_LPAREN:
                         function_name = expression_tokens[0].value
                         if function_name == "load":
                             expected_params = [TT_DOFFY_LIT]
@@ -297,8 +325,41 @@ class SemanticAnalyzer:
                             given_params = [expression_tokens[2].type]
                             function_return_type = "PINT"
                         else:
-                            self.errors.append(f"Undeclared Function Error: Function '{function_name}' is not declared. (line {line_number})")
-                            return
+                            if function_name not in self.function_signatures:
+                                self.errors.append(f"Undeclared Function Error: Function '{function_name}' is not declared. (line {line_number})")
+                                return
+                            
+                            expected_params = self.function_signatures[function_name]
+                            param_start_index = 2
+                            given_params = []
+                            while expression_tokens[param_start_index].type != TT_RPAREN:
+                                if expression_tokens[param_start_index].type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_IDTFR]:
+                                    param_value = expression_tokens[param_start_index]
+                                    if param_value.type == TT_IDTFR:
+                                        param_type = self.get_variable_type(param_value.value)
+                                        if param_type is None:
+                                            self.errors.append(f"Undeclared Variable Error: Variable '{param_value.value}' is not declared. (line {line_number})")
+                                            return
+                                    else:
+                                        param_type = param_value.type
+                                    given_params.append(param_type)
+                                param_start_index += 1
+
+                            if len(given_params) != len(expected_params):
+                                self.errors.append(f"Parameter Error: Function '{function_name}' expected {len(expected_params)} parameters but got {len(given_params)}. (line {line_number})")
+                                return
+
+                            for expected, given in zip(expected_params, given_params):
+                                if not self.is_type_compatible(expected, given):
+                                    self.errors.append(f"Type Error: Function '{function_name}' expected parameter of type {expected} but got {given}. (line {line_number})")
+                                    return
+
+                            function_return_type = self.symbol_table[0][function_name]["return_type"]
+
+                        if not self.is_type_compatible(variable_type, function_return_type):
+                            self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the function '{function_name}' returns type {function_return_type}. (line {line_number})")
+                        else:
+                            self.symbol_table[-1][variable_name] = {"type": variable_type, "function": self.inLocal, "inConLoops": self.inConLoops}
                     else:
                         expression_type = self.evaluate_expression_type(expression_tokens)
                         if not self.is_type_compatible(variable_type, expression_type):
@@ -307,18 +368,10 @@ class SemanticAnalyzer:
                             else:
                                 self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the assigned expression is of type {expression_type}. (line {line_number})")
                             return
-                    if not self.is_type_compatible(variable_type, function_return_type):
-                        self.errors.append(f"Type Error: Variable '{variable_name}' is of type {variable_type}, but the function '{function_name}' returns type {function_return_type}. (line {line_number})")
-                    else:
-                        if self.inLocal == True: 
-                            self.symbol_table[-1][variable_name] = {"type": variable_type, "function": True}
                         else:
-                            self.symbol_table[-1][variable_name] = {"type": variable_type, "function": False}
+                            self.symbol_table[-1][variable_name] = {"type": variable_type, "function": self.inLocal, "inConLoops": self.inConLoops}
                 else:
-                    if self.inLocal == True: 
-                        self.symbol_table[-1][variable_name] = {"type": variable_type, "function": True}
-                    else:
-                        self.symbol_table[-1][variable_name] = {"type": variable_type, "function": False}
+                    self.symbol_table[-1][variable_name] = {"type": variable_type, "function": self.inLocal, "inConLoops": self.inConLoops}
                     i += 1
             i += 1
 
@@ -417,15 +470,13 @@ class SemanticAnalyzer:
 
     def handle_function_definition(self, line_tokens, line_number):
         self.inLocal = True
+
         function_name = line_tokens[1].value
         return_type = line_tokens[0].type
         if function_name in self.symbol_table[-1]:
             self.errors.append(f"Redeclaration Error: Function '{function_name}' is already declared. (line {line_number})")
         else:
-            if self.inLocal == True: 
-                self.symbol_table[-1][function_name] = {"type": "function", "return_type": return_type, "function": True}
-            else:
-                self.symbol_table[-1][function_name] = {"type": "function", "return_type": return_type, "function": False}
+            self.symbol_table[-1][function_name] = {"type": "function", "return_type": return_type, "function": self.inLocal, "inConLoops": self.inConLoops}
             self.current_function = function_name
             function_scope = {}
 
@@ -435,7 +486,7 @@ class SemanticAnalyzer:
                 if line_tokens[i].type in [TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL]:
                     param_type = line_tokens[i].type
                     param_name = line_tokens[i + 1].value
-                    function_scope[param_name] = {"type": param_type, "function": False}
+                    function_scope[param_name] = {"type": param_type, "function": True}
                     param_list.append(param_type)
                 i += 1
             self.function_signatures[function_name] = param_list
@@ -485,6 +536,7 @@ class SemanticAnalyzer:
     
     def handle_four_loop(self, line_tokens, line_number):
         self.inLocal = True
+        self.inConLoops = True
 
         loop_var = line_tokens[3].value
         start_expr_tokens = []
@@ -506,10 +558,7 @@ class SemanticAnalyzer:
             if line_tokens[2].type != TT_PINT:
                 self.errors.append(f"Type Error: Loop variable '{loop_var}' must be of type {TT_PINT}. (line {line_number})")
             else:
-                if self.inLocal == True: 
-                    self.symbol_table[-1][loop_var] = {"type": TT_PINT, "function": True}
-                else:
-                    self.symbol_table[-1][loop_var] = {"type": TT_PINT, "function": False}
+                self.symbol_table[-1][loop_var] = {"type": TT_PINT, "function": self.inLocal, "inConLoops": self.inConLoops}
 
         start_expr_type = self.evaluate_expression_type(start_expr_tokens)
         end_expr_type = self.evaluate_expression_type(end_expr_tokens)
@@ -554,6 +603,7 @@ class SemanticAnalyzer:
 
     def handle_whale_loop(self, line_tokens, line_number):
         self.inLocal = True
+        self.inConLoops = True
 
         condition_tokens = line_tokens[2:-2]
         isBull = self.contains_comparator(condition_tokens)
@@ -562,6 +612,7 @@ class SemanticAnalyzer:
 
     def handle_theo_conditional(self, line_tokens, line_number):
         self.inLocal = True
+        self.inConLoops = True
 
         condition_tokens = line_tokens[2:-2]
         isBull = self.contains_comparator(condition_tokens)
@@ -570,6 +621,7 @@ class SemanticAnalyzer:
 
     def handle_altheo_conditional(self, line_tokens, line_number):
         self.inLocal = True
+        self.inConLoops = True
 
         condition_tokens = line_tokens[2:-2]
         isBull = self.contains_comparator(condition_tokens)
@@ -578,11 +630,13 @@ class SemanticAnalyzer:
 
     def handle_alt_conditional(self, line_tokens, line_number):
         self.inLocal = True
+        self.inConLoops = True
 
         pass  
 
     def handle_helm_switch(self, line_tokens, line_number):
         self.inLocal = True
+        self.inConLoops = True
 
         expression_tokens = line_tokens[2:-2]
         expression_type = self.evaluate_expression_type(expression_tokens)
