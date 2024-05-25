@@ -2,6 +2,7 @@ import constants
 import re
 import os
 import keyword
+import builtins
 
 class Generator:
     def __init__(self, code):
@@ -42,7 +43,11 @@ statement_replacements = {
     'void'  : 'def',
     'loyal ': '',
 }
+all_builtins = dir(builtins)
+builtin_function_names = [name for name in all_builtins if callable(getattr(builtins, name))]
 python_keywords = set(keyword.kwlist)
+python_keywords = python_keywords.union(builtin_function_names)
+
 def preprocess_identifiers(code, keywords):
     # Regex pattern for identifiers (assuming they follow Python's naming conventions)
     identifier_pattern = re.compile(r'\b[a-zA-Z_]\w*\b')
@@ -366,7 +371,7 @@ def generate(code):
                         if types_dict[declare[0].strip()] == 'int':
                             line = line.replace(declare[1], f'int({declare[1]})')
                         elif types_dict[declare[0].strip()] == 'float':
-                            line = line.replace(declare[1], f'float({declare[1]})')
+                            line = line.replace(declare[1], f'float(' + '\"{:.4f}\".format(' + f'{declare[1]}))')
                         elif types_dict[declare[0].strip()] == 'str':
                             line = line.replace(declare[1], f'str({declare[1]})')
                         elif types_dict[declare[0].strip()] == 'bool':
