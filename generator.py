@@ -219,7 +219,7 @@ def generate(code):
             if activeBrackets == 0 and '(' in line:
                 words = line.split()
                 words[0] = 'def'
-                line = ' '.join(words)
+                line = ' '.join(words)            
             line = extract_var_types(line, types_dict)
         
         if 'load' in line:
@@ -274,18 +274,46 @@ def generate(code):
 
         if 'fire' in line:
             # Define a regex pattern to match fire function calls with arguments
-            pattern = r'fire\((.*?)\)'
+            pattern = r'fire\((.*)\)'
+
+            def find_matching_parenthesis(s, start_index):
+                stack = 1
+                for i in range(start_index + 1, len(s)):
+                    if s[i] == '(':
+                        stack += 1
+                    elif s[i] == ')':
+                        stack -= 1
+                    if stack == 0:
+                        return i
+                return -1
 
             def replace_fire(match):
-                arg = match.group(1)
+                arg_start = match.start(1)
+                arg_end = find_matching_parenthesis(line, arg_start - 1)
+                if arg_end == -1:
+                    return match.group(0)  # No match found, return original string
+                
+                arg = line[arg_start:arg_end].strip()
+                print(arg)
                 # Handle the special case for "\n"
                 if arg == '"\\n"':
-                    return f'print("\\n", end="")'
+                    return 'print("\\n", end="")'
                 else:
                     return f'print({arg}, end="")'
             
-             # Perform the replacement using sub() function with a replacement function
-            line = re.sub(pattern, replace_fire, line)
+            def custom_sub(line):
+                matches = list(re.finditer(pattern, line))
+                result = []
+                last_end = 0
+                for match in matches:
+                    start, end = match.span()
+                    result.append(line[last_end:start])
+                    result.append(replace_fire(match))
+                    last_end = end
+                result.append(line[last_end:])
+                return ''.join(result)
+            
+            line = custom_sub(line)
 
         if 'four' in line:
             activeParenthesis = 0
