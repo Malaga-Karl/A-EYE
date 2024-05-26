@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import lexer
 import syntax
-import semantics
+import test_semantics
 import imageio
 import threading
 import time
@@ -28,7 +28,7 @@ def analyze_code():
     if errors:
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n")
-            terminal_text.tag_configure(foreground="light red")
+        terminal_text.config(state="disabled", foreground="#ff6961")
     else:
         terminal_text.insert(tk.END, "Lexical analysis successful" + "\n")
         terminal_text.config(state="disabled")
@@ -51,26 +51,30 @@ def analyze_syntax():
     placeholder_text = 'Start the code here ...................'
     if code == placeholder_text:
         return
+    
     result, errors = lexer.analyze_text(code)
-    if not errors:
-        syntax_result = syntax.analyze_syntax(result)
-        generator.generate(code)
-   
+    
     terminal_text.config(state="normal")
     terminal_text.delete("1.0", "end")
+    
     if errors:
         for error in errors:
-            terminal_text.insert(tk.END, error.as_string() + "\n")
-            terminal_text.tag_configure(foreground="light red")
+            terminal_text.insert(tk.END, error.as_string() + "\n", "error")
+        terminal_text.tag_configure("error", foreground="#ff6961")
         terminal_text.config(state="disabled")
+        return
+    
+    syntax_result = syntax.analyze_syntax(result)
+    terminal_text.insert(tk.END, syntax_result + "\n")
+    
+    if syntax_result == "Syntax analysis successful":
+        terminal_text.tag_configure("success", foreground="light green")
+        terminal_text.tag_add("success", "1.0", "end")
     else:
-        output = open("output.txt", "r")
-        terminal_text.insert(tk.END, syntax_result + "\n")
-        terminal_text.insert(tk.END, output.read() + "\n")
-        terminal_text.config(state="disabled")
-        if syntax_result == "Syntax analysis successful":
-            terminal_text.tag_configure("success", foreground="light green")
-            terminal_text.tag_add("success", "1.0", "end")
+        terminal_text.tag_configure("error", foreground="#ff6961")
+        terminal_text.tag_add("error", "1.0", "end")
+    
+    terminal_text.config(state="disabled")
 
     table_headers = ["Line #", "Lexeme", "Token"]
     table.delete(*table.get_children()) 
@@ -94,32 +98,28 @@ def analyze_semantics():
     terminal_text.delete("1.0", "end")
     
     if errors:
-        # Display lexical errors in light red
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n", "error")
-        terminal_text.tag_configure("error", foreground="#light red")
-        terminal_text.config(state="disabled")
+        terminal_text.tag_configure("error", foreground="#ff6961")
         return False, result, errors
     
     syntax_result = syntax.analyze_syntax(result)
-    semantics_result = semantics.analyze(result)
-    
+    semantics_result = test_semantics.analyze_sem(result)
     if syntax_result == "Syntax analysis successful":
         terminal_text.insert(tk.END, syntax_result + "\n", "success")
         terminal_text.tag_configure("success", foreground="light green")
     else:
         terminal_text.insert(tk.END, syntax_result + "\n", "error")
-        terminal_text.tag_configure("error", foreground="#light red")
-        terminal_text.config(state="disabled")
+        terminal_text.tag_configure("error", foreground="#ff6961")
         return False, result, [syntax_result]
+    
         
     if semantics_result == "Semantic analysis successful":
         terminal_text.insert(tk.END, semantics_result + "\n", "success")
         terminal_text.tag_configure("success", foreground="light green")
     else:
         terminal_text.insert(tk.END, semantics_result + "\n", "error")
-        terminal_text.tag_configure("error", foreground="#light red")
-        terminal_text.config(state="disabled")
+        terminal_text.tag_configure("error", foreground="#ff6961")
         return False, result, [semantics_result]
     
     # Disable editing after displaying the message
@@ -522,7 +522,7 @@ btn_redo.bind("<Enter>", on_enter)
 
 #Colored Reserve Words
 def update_text_color(event=None):
-    reserved_words = ["onboard", "offboard", "captain", "pint", "fleet", "bull", "doffy", "loyal", "fire", "load", "len", "theo", "alt", "althea", "helm", "chest", "dagger", "four", "whale", "real", "usopp", "and", "oro", "nay", "leak", "sail", "anchor", "pass", "void", "home"]
+    reserved_words = ["onboard", "offboard", "captain", "pint", "fleet", "bull", "doffy", "loyal", "fire", "load", "len", "theo", "alt", "altheo", "helm", "chest", "dagger", "four", "whale", "real", "usopp", "and", "oro", "nay", "leak", "sail", "anchor", "pass", "void", "home"]
 
     text_widget.tag_remove("reserved_words", "1.0", "end")
     text_widget.tag_remove("brackets", "1.0", "end")
@@ -550,7 +550,7 @@ def update_text_color(event=None):
             text_widget.tag_add("brackets", start_index, end_index)
 
     # For Quotes
-    quote_pairs = [('"', '"'), ("'", "'")]
+    quote_pairs = [('"', '"')]
     for opening, closing in quote_pairs:
         start_index = "1.0"
         while True:
