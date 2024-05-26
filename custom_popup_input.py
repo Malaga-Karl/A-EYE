@@ -18,9 +18,6 @@ class CustomPopup(ctk.CTkToplevel):
         # Disable the close button (X)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         
-        # Flag to track whether input was submitted
-        self.input_submitted = False
-        
         # Schedule setting focus to the entry field after a short delay
         self.after(100, self.focus_entry)
 
@@ -30,7 +27,6 @@ class CustomPopup(ctk.CTkToplevel):
     def submit(self, event=None):
         if self.callback:
             self.callback(self.entry.get())
-            self.input_submitted = True
         self.destroy()
 
     def on_closing(self):
@@ -39,23 +35,15 @@ class CustomPopup(ctk.CTkToplevel):
 
 def show_custom_popup(prompt):
     result = []
-
+    
     def on_submit(value):
         result.append(value)
         root.quit()
 
-    while True:  # Continuously loop until input is provided
-        root = tk.Tk()
-        root.withdraw()  # Hide the root window
-        popup = CustomPopup(root, prompt=prompt, callback=on_submit)
-        root.mainloop()
-        root.destroy()
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    popup = CustomPopup(root, prompt=prompt, callback=on_submit)
+    root.mainloop()
+    root.destroy()
 
-        # Check if the user submitted input or closed the window without submitting
-        if popup.input_submitted:
-            return result[0]
-        else:
-            # If the window was closed without submitting, append an empty string to the result
-            result.append("")
-
-
+    return result[0]

@@ -92,6 +92,31 @@ def replace_code(line, replacements, types_dict):
 
     return ''.join(new_segments)
 
+def parse_declarations(input_string):
+    # Pattern to match the load function with its argument
+    load_pattern = re.compile(r'load\(".*?"\)')
+    
+    # Split the input string by commas first
+    initial_segments = input_string.split(',')
+
+    segments = []
+    buffer = ''
+    
+    for segment in initial_segments:
+        buffer += segment.strip()
+        if load_pattern.search(buffer):
+            # If the buffer contains a complete load function call
+            segments.append(buffer)
+            buffer = ''
+        else:
+            # If it does not, add a comma back and continue buffering
+            buffer += ', '
+    
+    if buffer:
+        segments.append(buffer.strip(', '))
+    
+    return segments
+
 def adjust_print_booleans(segment, types_dict):
     # Extract the variable being printed
     match = re.search(r'print\((.*?)\)', segment)
@@ -229,8 +254,13 @@ def generate(code):
                 line = ' '.join(words)            
             line = extract_var_types(line, types_dict)
         
+        
+
+        print("outside comma + ", line)
+
         if 'load' in line:
-            segments = line.split(',')
+            segments = parse_declarations(line)
+            segments = segments[0].split(',')
             for j in range(len(segments)):
                 segment = segments[j]
                 if 'load' in segment:
@@ -239,14 +269,14 @@ def generate(code):
                         var_type = var_declaration_match.group(1)
                         var_name = var_declaration_match.group(2)
                         prompt = var_declaration_match.group(3)
-                        
+
                         if var_type == 'int':
-                            load_replacement = f'user_input=show_custom_popup("[ PINT ] " + {prompt[0]})\n\t{var_name} = (lambda x: (int(x) if isinstance((result := int(x)), int) else result) if (isinstance((result := int(x)), int) or True) else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
+                            load_replacement = f'user_input=show_custom_popup("[ PINT ] " + {prompt})\n' + '\t'*activeBrackets + f'{var_name} = (lambda x: (int(x) if isinstance((result := int(x)), int) else result) if (isinstance((result := int(x)), int) or True) else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
                         elif var_type == 'float':
-                            load_replacement = f'user_input=show_custom_popup("[ FLEET ] " + {prompt[0]})\n\t{var_name} = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
+                            load_replacement = f'user_input=show_custom_popup("[ FLEET ] " + {prompt})\n' + '\t'*activeBrackets + f'{var_name} = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
                         else:
                             load_replacement = f'{var_name} = show_custom_popup("[ DOFFY ] " + {prompt})'
-                            
+
                         segments[j] = load_replacement
                         types_dict[var_name] = var_type  # Add to types_dict if newly declared
                     else:
@@ -255,18 +285,19 @@ def generate(code):
                         if var_name in types_dict:
                             var_type = types_dict[var_name]
                             if var_type == 'int':
-                                load_replacement = f'user_input=show_custom_popup("[ PINT ] " + {prompt[0]})\n\t{var_name} = (lambda x: int(x) if x.lstrip("-").isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
+                                load_replacement = f'user_input=show_custom_popup("[ PINT ] " + {prompt[0]})\n' + '\t'*activeBrackets + f'{var_name} = (lambda x: int(x) if x.lstrip("-").isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
                             elif var_type == 'float':
-                                load_replacement = f'user_input=show_custom_popup("[ FLEET ] " + {prompt[0]})\n\t{var_name} = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
+                                load_replacement = f'user_input=show_custom_popup("[ FLEET ] " + {prompt[0]})\n' + '\t'*'activeBrackets' + f'{var_name} = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
                             else:
                                 load_replacement = f'{var_name} = show_custom_popup("[ DOFFY ] " + {prompt[0]})'
                             segments[j] = segment.replace(f'{var_name} = load({prompt[0]})', load_replacement, 1)
-            
+
             line = ', '.join(segments)
 
         if ',' in line:
             isParam = False
             isArray = False
+            isInQuote = False
             for letter in line:
                 if letter == '[':
                     isArray = True
@@ -276,8 +307,14 @@ def generate(code):
                     isParam = True
                 if letter == ')':
                     isParam = False
-                if letter == ',' and not isParam and not isArray:
+                if letter == '"' and not isInQuote:
+                    isInQuote = True
+                elif letter == '"' and isInQuote:
+                    isInQuote = False
+                if letter == ',' and not isParam and not isArray and not isInQuote:
                     line = line.replace(letter, "; ", 1)
+            line = line
+            print("comma detected + ", line)
 
         if 'fire' in line:
             # Define a regex pattern to match fire function calls with arguments
@@ -368,7 +405,7 @@ def generate(code):
             for item in decl:
                 if '=' in item:
                     declare = item.split("=")
-                    if declare[0].strip() in types_dict:
+                    if declare[0].strip() in types_dict and '[' not in declare[1]:
                         if types_dict[declare[0].strip()] == 'int':
                             line = line.replace(declare[1], f'int({declare[1]})')
                         elif types_dict[declare[0].strip()] == 'float':
