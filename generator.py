@@ -359,7 +359,7 @@ def generate(code):
             
             line = custom_sub(line)
 
-        if 'four' in line:
+        if firstWord == 'four':
             activeParenthesis = 0
             words_inside_for_loop = ''
             four_index = line.index('four')

@@ -1,5 +1,2 @@
-    $
-    $$$
-    $$$$$
-    $$$$$$$
-    $$$$$$$$$
+Longest word: gerucke
+Shortest word: karl
