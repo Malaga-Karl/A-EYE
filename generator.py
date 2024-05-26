@@ -360,7 +360,7 @@ def generate(code):
             
             line = custom_sub(line)
 
-        if firstWord == 'four':
+        if line[0:4] == 'four':
             activeParenthesis = 0
             words_inside_for_loop = ''
             four_index = line.index('four')
