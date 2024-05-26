@@ -1,1 +1,1 @@
-1.5556
+Length of the word is:4

@@ -42,6 +42,7 @@ statement_replacements = {
     'dagger': 'case _',
     'void'  : 'def',
     'loyal ': '',
+    'len': 'len',
 }
 all_builtins = dir(builtins)
 builtin_function_names = [name for name in all_builtins if callable(getattr(builtins, name))]
