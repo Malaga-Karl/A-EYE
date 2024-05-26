@@ -1,20 +1,25 @@
 from custom_popup_input import show_custom_popup
 
+def dispCrew(pirate_crew, crew_size):
+	
+
+	print("Pirate Crew:\n", end=""); 
+	i = 0
+	while i < crew_size:
+		print("Pirate ", end=""); 
+		print(i + 1, end=""); 
+		print(": ", end=""); 
+		print(pirate_crew[i], end=""); 
+		print("\n", end=""); 
+		i+=1
+
+
 def main():
 	
 
-	arr = [10, 5, 8, 3, 6]; 
-	size =int( len(arr)); 
-	lowest = arr[0]; 
-	i = 1
-	while i < size:
-		if(arr[i] < lowest):
-			lowest = arr[i]; 
-		
-		i+=1
-
-	print("The lowest element in the array is: ", end=""); 
-	print(lowest, end=""); 
+	pirate_crew = ["Gericke", "Waki", "Ryan", "Hale", "Jake", "Luwes", "Karl"]; 
+	crew_size =int( len(pirate_crew)); 
+	dispCrew(pirate_crew, crew_size); 
 
 
 if __name__ == '__main__':

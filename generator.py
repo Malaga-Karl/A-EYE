@@ -412,7 +412,7 @@ def generate(code):
                         elif types_dict[declare[0].strip()] == 'float':
                             line = line.replace(declare[1], f'float(' + '\"{:.4f}\".format(' + f'{declare[1]}))')
                         elif types_dict[declare[0].strip()] == 'str':
-                            line = line.replace(declare[1], f'str({declare[1]})')
+                            line = line.replace(declare[1], f'{declare[1]}')
                         elif types_dict[declare[0].strip()] == 'bool':
                             line = line.replace(declare[1], f'bool({declare[1]})')
                     # variables[declare[0].strip()] = declare[1].strip()
