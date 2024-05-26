@@ -1,2 +1,1 @@
-Longest word: gerucke
-Shortest word: karl
+121.8994

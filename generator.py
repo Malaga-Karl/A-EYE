@@ -287,7 +287,7 @@ def generate(code):
                             if var_type == 'int':
                                 load_replacement = f'user_input=show_custom_popup("[ PINT ] " + {prompt[0]})\n' + '\t'*activeBrackets + f'{var_name} = (lambda x: int(x) if x.lstrip("-").isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
                             elif var_type == 'float':
-                                load_replacement = f'user_input=show_custom_popup("[ FLEET ] " + {prompt[0]})\n' + '\t'*'activeBrackets' + f'{var_name} = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
+                                load_replacement = f'user_input=show_custom_popup("[ FLEET ] " + {prompt[0]})\n' + '\t'*activeBrackets + f'{var_name} = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input)'
                             else:
                                 load_replacement = f'{var_name} = show_custom_popup("[ DOFFY ] " + {prompt[0]})'
                             segments[j] = segment.replace(f'{var_name} = load({prompt[0]})', load_replacement, 1)
