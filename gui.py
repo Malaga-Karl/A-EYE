@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import lexer
 import syntax
-import semantics
+import test_semantics
 import imageio
 import threading
 import time
@@ -28,7 +28,7 @@ def analyze_code():
     if errors:
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n")
-            terminal_text.tag_configure(foreground="light red")
+        terminal_text.config(state="disabled", foreground="#ff6961")
     else:
         terminal_text.insert(tk.END, "Lexical analysis successful" + "\n")
         terminal_text.config(state="disabled")
@@ -50,26 +50,30 @@ def analyze_syntax():
     placeholder_text = 'Start the code here ...................'
     if code == placeholder_text:
         return
+    
     result, errors = lexer.analyze_text(code)
-    if not errors:
-        syntax_result = syntax.analyze_syntax(result)
-        generator.generate(code)
-   
+    
     terminal_text.config(state="normal")
     terminal_text.delete("1.0", "end")
+    
     if errors:
         for error in errors:
-            terminal_text.insert(tk.END, error.as_string() + "\n")
-            terminal_text.tag_configure(foreground="light red")
+            terminal_text.insert(tk.END, error.as_string() + "\n", "error")
+        terminal_text.tag_configure("error", foreground="#ff6961")
         terminal_text.config(state="disabled")
+        return
+    
+    syntax_result = syntax.analyze_syntax(result)
+    terminal_text.insert(tk.END, syntax_result + "\n")
+    
+    if syntax_result == "Syntax analysis successful":
+        terminal_text.tag_configure("success", foreground="light green")
+        terminal_text.tag_add("success", "1.0", "end")
     else:
-        output = open("output.txt", "r")
-        terminal_text.insert(tk.END, syntax_result + "\n")
-        terminal_text.insert(tk.END, output.read() + "\n")
-        terminal_text.config(state="disabled")
-        if syntax_result == "Syntax analysis successful":
-            terminal_text.tag_configure("success", foreground="light green")
-            terminal_text.tag_add("success", "1.0", "end")
+        terminal_text.tag_configure("error", foreground="#ff6961")
+        terminal_text.tag_add("error", "1.0", "end")
+    
+    terminal_text.config(state="disabled")
 
     table_headers = ["Line #", "Lexeme", "Token"]
     table.delete(*table.get_children()) 
@@ -93,32 +97,28 @@ def analyze_semantics():
     terminal_text.delete("1.0", "end")
     
     if errors:
-        # Display lexical errors in light red
         for error in errors:
             terminal_text.insert(tk.END, error.as_string() + "\n", "error")
-        terminal_text.tag_configure("error", foreground="#light red")
-        terminal_text.config(state="disabled")
+        terminal_text.tag_configure("error", foreground="#ff6961")
         return False, result, errors
     
     syntax_result = syntax.analyze_syntax(result)
-    semantics_result = semantics.analyze(result)
-    
+    semantics_result = test_semantics.analyze_sem(result)
     if syntax_result == "Syntax analysis successful":
         terminal_text.insert(tk.END, syntax_result + "\n", "success")
         terminal_text.tag_configure("success", foreground="light green")
     else:
         terminal_text.insert(tk.END, syntax_result + "\n", "error")
-        terminal_text.tag_configure("error", foreground="#light red")
-        terminal_text.config(state="disabled")
+        terminal_text.tag_configure("error", foreground="#ff6961")
         return False, result, [syntax_result]
+    
         
     if semantics_result == "Semantic analysis successful":
         terminal_text.insert(tk.END, semantics_result + "\n", "success")
         terminal_text.tag_configure("success", foreground="light green")
     else:
         terminal_text.insert(tk.END, semantics_result + "\n", "error")
-        terminal_text.tag_configure("error", foreground="#light red")
-        terminal_text.config(state="disabled")
+        terminal_text.tag_configure("error", foreground="#ff6961")
         return False, result, [semantics_result]
     
     # Disable editing after displaying the message
@@ -521,13 +521,14 @@ btn_redo.bind("<Enter>", on_enter)
 
 #Colored Reserve Words
 def update_text_color(event=None):
-    reserved_words = ["onboard", "offboard", "captain", "pint", "fleet", "bull", "doffy", "loyal", "fire", "load", "len", "theo", "alt", "althea", "helm", "chest", "dagger", "four", "whale", "real", "usopp", "and", "oro", "nay", "leak", "sail", "anchor", "pass", "void", "home"]
+    reserved_words = ["onboard", "offboard", "captain", "pint", "fleet", "bull", "doffy", "loyal", "fire", "load", "len", "theo", "alt", "altheo", "helm", "chest", "dagger", "four", "whale", "real", "usopp", "and", "oro", "nay", "leak", "sail", "anchor", "pass", "void", "home"]
 
     text_widget.tag_remove("reserved_words", "1.0", "end")
     text_widget.tag_remove("brackets", "1.0", "end")
     text_widget.tag_remove("quotes", "1.0", "end")
     text_widget.tag_remove("comments", "1.0", "end")
     text_widget.tag_remove("block_comments", "1.0", "end")
+    text_widget.tag_remove("newline_in_quotes", "1.0", "end")
 
     content = text_widget.get("1.0", "end")
 
@@ -548,9 +549,9 @@ def update_text_color(event=None):
             end_index = f"1.0 + {match.end()}c"
             text_widget.tag_add("brackets", start_index, end_index)
 
-    # For Quotes
-    quote_pairs = [('"', '"'), ("'", "'")]
-    for opening, closing in quote_pairs:
+    # For Quotes and Newline Inside Quotes
+    quote_patterns = [('"', '"'), ("'", "'")]
+    for opening, closing in quote_patterns:
         start_index = "1.0"
         while True:
             start_index = text_widget.search(re.escape(opening), start_index, stopindex="end")
@@ -561,6 +562,14 @@ def update_text_color(event=None):
                 break
             end_index = f"{end_index}+1c"
             text_widget.tag_add("quotes", start_index, end_index)
+            
+            # Highlight \n inside quotes
+            content_in_quotes = text_widget.get(start_index, end_index)
+            for match in re.finditer(r'\\n', content_in_quotes):
+                start_nl_index = f"{start_index}+{match.start()}c"
+                end_nl_index = f"{start_index}+{match.end()}c"
+                text_widget.tag_add("newline_in_quotes", start_nl_index, end_nl_index)
+            
             start_index = end_index
 
     # For Single Line Comments
@@ -568,7 +577,19 @@ def update_text_color(event=None):
     for match in re.finditer(pattern, content):
         start_index = f"1.0 + {match.start()}c"
         end_index = f"1.0 + {match.end()}c"
-        text_widget.tag_add("comments", start_index, end_index)
+
+        # Check if the # is within quotes
+        ranges = text_widget.tag_nextrange("quotes", "1.0", end_index)
+        inside_quotes = False
+        while ranges:
+            quote_start, quote_end = ranges
+            if text_widget.compare(start_index, ">=", quote_start) and text_widget.compare(start_index, "<", quote_end):
+                inside_quotes = True
+                break
+            ranges = text_widget.tag_nextrange("quotes", quote_end, end_index)
+        
+        if not inside_quotes:
+            text_widget.tag_add("comments", start_index, end_index)
 
     # For Block Comments
     start = "1.0"
@@ -581,7 +602,20 @@ def update_text_color(event=None):
             end = "end"
         else:
             end = f"{end}+2c"
-        text_widget.tag_add("block_comments", start, end)
+
+        # Check if the ## is within quotes
+        ranges = text_widget.tag_nextrange("quotes", "1.0", end)
+        inside_quotes = False
+        while ranges:
+            quote_start, quote_end = ranges
+            if text_widget.compare(start, ">=", quote_start) and text_widget.compare(start, "<", quote_end):
+                inside_quotes = True
+                break
+            ranges = text_widget.tag_nextrange("quotes", quote_end, end)
+        
+        if not inside_quotes:
+            text_widget.tag_add("block_comments", start, end)
+
         start = end
 
         # Remove green color for text after block comments
@@ -592,6 +626,7 @@ def update_text_color(event=None):
     text_widget.tag_config("reserved_words", foreground="#5BBCFF")
     text_widget.tag_config("brackets", foreground="#FDDE55")
     text_widget.tag_config("quotes", foreground="#68D2E8")
+    text_widget.tag_config("newline_in_quotes", foreground="#FEFF86")
     text_widget.tag_config("comments", foreground="#008000")
     text_widget.tag_config("block_comments", foreground="#008000")
 

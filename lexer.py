@@ -229,7 +229,7 @@ class Lexer:
                 if word[0] == 'n' and len(word) >= 2:
                     if word[1] == 'a' and len(word) >= 3:
                         if word[2] == 'y' and len(word) == 3:
-                            if self.current_char == ' ':
+                            if self.current_char == TT_LPAREN:
                                 tokens.append(Token(self.pos.ln + 1, TT_NAY, word))
                                 isIDNTFR = False
                             else:

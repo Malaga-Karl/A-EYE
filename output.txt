@@ -1,1 +1,8 @@
-print
+Pirate Crew:
+Pirate 1: Gericke
+Pirate 2: Waki
+Pirate 3: Ryan
+Pirate 4: Hale
+Pirate 5: Jake
+Pirate 6: Luwes
+Pirate 7: Karl

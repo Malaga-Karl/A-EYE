@@ -1,4 +1,26 @@
+from custom_popup_input import show_custom_popup
+
+def dispCrew(pirate_crew, crew_size):
+	
+
+	print("Pirate Crew:\n", end=""); 
+	i = 0
+	while i < crew_size:
+		print("Pirate ", end=""); 
+		print(i + 1, end=""); 
+		print(": ", end=""); 
+		print(pirate_crew[i], end=""); 
+		print("\n", end=""); 
+		i+=1
+
+
 def main():
-	arr = [10;   5;   8;   3;   6]; 
-	size = len(arr); 
-	lowest = arr[0]; 
+	
+
+	pirate_crew = ["Gericke", "Waki", "Ryan", "Hale", "Jake", "Luwes", "Karl"]; 
+	crew_size =int( len(pirate_crew)); 
+	dispCrew(pirate_crew, crew_size); 
+
+
+if __name__ == '__main__':
+    main()
