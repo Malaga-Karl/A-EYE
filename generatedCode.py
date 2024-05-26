@@ -1,6 +1,4 @@
 def main():
-	print("print"); 
-
-
-if __name__ == '__main__':
-    main()
+	arr = [10;   5;   8;   3;   6]; 
+	size = len(arr); 
+	lowest = arr[0]; 
