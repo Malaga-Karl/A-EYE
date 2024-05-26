@@ -1,1 +1,1 @@
-The volume of the cylinder is: 785.0
+The lowest element in the array is: 3

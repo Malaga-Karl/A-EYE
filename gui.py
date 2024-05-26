@@ -528,6 +528,7 @@ def update_text_color(event=None):
     text_widget.tag_remove("quotes", "1.0", "end")
     text_widget.tag_remove("comments", "1.0", "end")
     text_widget.tag_remove("block_comments", "1.0", "end")
+    text_widget.tag_remove("newline_in_quotes", "1.0", "end")
 
     content = text_widget.get("1.0", "end")
 
@@ -548,9 +549,9 @@ def update_text_color(event=None):
             end_index = f"1.0 + {match.end()}c"
             text_widget.tag_add("brackets", start_index, end_index)
 
-    # For Quotes
-    quote_pairs = [('"', '"')]
-    for opening, closing in quote_pairs:
+    # For Quotes and Newline Inside Quotes
+    quote_patterns = [('"', '"'), ("'", "'")]
+    for opening, closing in quote_patterns:
         start_index = "1.0"
         while True:
             start_index = text_widget.search(re.escape(opening), start_index, stopindex="end")
@@ -561,6 +562,14 @@ def update_text_color(event=None):
                 break
             end_index = f"{end_index}+1c"
             text_widget.tag_add("quotes", start_index, end_index)
+            
+            # Highlight \n inside quotes
+            content_in_quotes = text_widget.get(start_index, end_index)
+            for match in re.finditer(r'\\n', content_in_quotes):
+                start_nl_index = f"{start_index}+{match.start()}c"
+                end_nl_index = f"{start_index}+{match.end()}c"
+                text_widget.tag_add("newline_in_quotes", start_nl_index, end_nl_index)
+            
             start_index = end_index
 
     # For Single Line Comments
@@ -568,7 +577,19 @@ def update_text_color(event=None):
     for match in re.finditer(pattern, content):
         start_index = f"1.0 + {match.start()}c"
         end_index = f"1.0 + {match.end()}c"
-        text_widget.tag_add("comments", start_index, end_index)
+
+        # Check if the # is within quotes
+        ranges = text_widget.tag_nextrange("quotes", "1.0", end_index)
+        inside_quotes = False
+        while ranges:
+            quote_start, quote_end = ranges
+            if text_widget.compare(start_index, ">=", quote_start) and text_widget.compare(start_index, "<", quote_end):
+                inside_quotes = True
+                break
+            ranges = text_widget.tag_nextrange("quotes", quote_end, end_index)
+        
+        if not inside_quotes:
+            text_widget.tag_add("comments", start_index, end_index)
 
     # For Block Comments
     start = "1.0"
@@ -581,7 +602,20 @@ def update_text_color(event=None):
             end = "end"
         else:
             end = f"{end}+2c"
-        text_widget.tag_add("block_comments", start, end)
+
+        # Check if the ## is within quotes
+        ranges = text_widget.tag_nextrange("quotes", "1.0", end)
+        inside_quotes = False
+        while ranges:
+            quote_start, quote_end = ranges
+            if text_widget.compare(start, ">=", quote_start) and text_widget.compare(start, "<", quote_end):
+                inside_quotes = True
+                break
+            ranges = text_widget.tag_nextrange("quotes", quote_end, end)
+        
+        if not inside_quotes:
+            text_widget.tag_add("block_comments", start, end)
+
         start = end
 
         # Remove green color for text after block comments
@@ -592,6 +626,7 @@ def update_text_color(event=None):
     text_widget.tag_config("reserved_words", foreground="#5BBCFF")
     text_widget.tag_config("brackets", foreground="#FDDE55")
     text_widget.tag_config("quotes", foreground="#68D2E8")
+    text_widget.tag_config("newline_in_quotes", foreground="#FEFF86")
     text_widget.tag_config("comments", foreground="#008000")
     text_widget.tag_config("block_comments", foreground="#008000")
 
