@@ -319,7 +319,6 @@ def generate(code):
         if 'fire' in line:
             # Define a regex pattern to match fire function calls with arguments
             pattern = r'fire\((.*)\)'
-
             def find_matching_parenthesis(s, start_index):
                 stack = 1
                 for i in range(start_index + 1, len(s)):
@@ -338,10 +337,12 @@ def generate(code):
                     return match.group(0)  # No match found, return original string
                 
                 arg = line[arg_start:arg_end].strip()
-                print(arg)
+                
                 # Handle the special case for "\n"
                 if arg == '"\\n"':
                     return 'print("\\n", end="")'
+                elif '/' in arg and '"' not in arg:
+                    return f'print(' + '\"{:.4f}\".format(' + f'{arg}, end=""))'
                 else:
                     return f'print({arg}, end="")'
             

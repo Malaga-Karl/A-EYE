@@ -1,16 +1,14 @@
 from custom_popup_input import show_custom_popup
 
-pi = 3.14; 
 def main():
-	global pi
+	
 
-	user_input=show_custom_popup("[ FLEET ] " + "Enter the radius of the cylinder base: ")
-	radius = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input); 
-	user_input=show_custom_popup("[ FLEET ] " + "Enter the height of the cylinder: ")
-	height = (lambda x: float(x) if x.replace(".", "", 1).isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input); 
-	volume =float( pi * ((radius ** 2) * height)); 
-	print("The volume of the cylinder is: ", end=""); 
-	print(volume, end=""); 
+	user_input=show_custom_popup("[ PINT ] " + "enter your score: ")
+	your_score = (lambda x: int(x) if x.lstrip("-").isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input); 
+	user_input=show_custom_popup("[ PINT ] " + "total items: ")
+	total_items = (lambda x: int(x) if x.lstrip("-").isdigit() else (print("[ Error ] Invalid input. Type Mismatch") or exit()))(user_input); 
+	print("your grade is ", end=""); 
+	print("{:.4f}".format(your_score/total_items, end="")); 
 
 
 if __name__ == '__main__':
