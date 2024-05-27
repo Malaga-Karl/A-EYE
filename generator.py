@@ -256,8 +256,38 @@ def generate(code):
         
         
 
-        print("outside comma + ", line)
+        if ',' in line:
+            isParam = False
+            isArray = False
+            isInQuote = False
+            new_line = ""
+            i = 0
 
+            while i < len(line):
+                letter = line[i]
+                
+                if letter == '[':
+                    isArray = True
+                elif letter == ']':
+                    isArray = False
+                elif letter == '(':
+                    isParam = True
+                elif letter == ')':
+                    isParam = False
+                elif letter == '"' and not isInQuote:
+                    isInQuote = True
+                elif letter == '"' and isInQuote:
+                    isInQuote = False
+
+                if letter == ',' and not (isParam or isArray or isInQuote):
+                    new_line += "; "
+                else:
+                    new_line += letter
+
+                i += 1
+            line = new_line
+
+        print("outside comma + ", line)
         if 'load' in line:
             segments = parse_declarations(line)
             segments = segments[0].split(',')
@@ -294,27 +324,6 @@ def generate(code):
 
             line = ', '.join(segments)
 
-        if ',' in line:
-            isParam = False
-            isArray = False
-            isInQuote = False
-            for letter in line:
-                if letter == '[':
-                    isArray = True
-                if letter == ']':
-                    isArray = False
-                if letter == '(':
-                    isParam = True
-                if letter == ')':
-                    isParam = False
-                if letter == '"' and not isInQuote:
-                    isInQuote = True
-                elif letter == '"' and isInQuote:
-                    isInQuote = False
-                if letter == ',' and not isParam and not isArray and not isInQuote:
-                    line = line.replace(letter, "; ", 1)
-            line = line
-            print("comma detected + ", line)
 
         if 'fire' in line:
             # Define a regex pattern to match fire function calls with arguments
@@ -360,7 +369,7 @@ def generate(code):
             
             line = custom_sub(line)
 
-        if line[0:4] == 'four':
+        if line[0:4] == 'four': 
             activeParenthesis = 0
             words_inside_for_loop = ''
             four_index = line.index('four')
@@ -412,7 +421,7 @@ def generate(code):
                         elif types_dict[declare[0].strip()] == 'float':
                             line = line.replace(declare[1], f'float(' + '\"{:.4f}\".format(' + f'{declare[1]}))')
                         elif types_dict[declare[0].strip()] == 'str':
-                            line = line.replace(declare[1], f'str({declare[1]})')
+                            line = line.replace(declare[1], f'{declare[1]}')
                         elif types_dict[declare[0].strip()] == 'bool':
                             line = line.replace(declare[1], f'bool({declare[1]})')
                     # variables[declare[0].strip()] = declare[1].strip()

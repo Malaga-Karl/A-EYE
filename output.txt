@@ -1,1 +1,1 @@
-enter a number less than or equal to 100
+[1, 2, 3]
