@@ -583,8 +583,8 @@ class SyntaxAnalyzer:
     # 59 {BULL_LIT}
     def condition(self):
         if self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET, TT_REAL, TT_USOPP]:
-            if self.current_token.type in [TT_REAL, TT_USOPP] and self.peek() is not None and self.peek().type == TT_RPAREN:
-                if not self.consume([TT_REAL, TT_USOPP]):return
+            if self.current_token.type in [TT_REAL, TT_USOPP, TT_IDTFR] and self.peek() is not None and self.peek().type == TT_RPAREN:
+                if not self.consume([TT_REAL, TT_USOPP, TT_IDTFR]):return
             elif self.is_relational_or_logical_comp() == True or self.current_token.type == TT_NAY:
                 self.logical_op()
             else:

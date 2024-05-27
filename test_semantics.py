@@ -627,7 +627,7 @@ class SemanticAnalyzer:
 
         condition_tokens = line_tokens[2:-2]
         isBull = self.contains_comparator(condition_tokens)
-        if not isBull:
+        if not isBull and self.get_variable_type(condition_tokens[0].value) != TT_BULL:
             self.errors.append(f"Type Error: THEO condition must be of type {TT_BULL}. (line {line_number})")
 
     def handle_altheo_conditional(self, line_tokens, line_number):
@@ -781,7 +781,7 @@ def analyze_line(tokens):
         return "ARRAY_VARIABLE_ASSIGNMENT"
     elif tokens[0].type == TT_CAPTAIN:
         return "CAPTAIN_DEFINITION"
-    elif tokens[0].type in [TT_VOID, TT_PINT, TT_FLEET, TT_DOFFY] and tokens[1].type == TT_IDTFR and tokens[2].type == TT_LPAREN:
+    elif tokens[0].type in [TT_VOID, TT_PINT, TT_FLEET, TT_DOFFY, TT_BULL] and tokens[1].type == TT_IDTFR and tokens[2].type == TT_LPAREN:
         return "FUNCTION_DEFINITION"
     elif len(tokens) == 1 and tokens[0].type == TT_LBRACKET:
         return "START_BLOCK"
