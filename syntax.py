@@ -326,8 +326,14 @@ class SyntaxAnalyzer:
             if self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP] and self.peek() is not None and self.peek().type not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]:
                 self.literal()
             elif self.current_token.type in [TT_IDTFR] and self.peek() is not None and self.peek().type not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_LPAREN]:
-                if not self.consume([TT_IDTFR]):return
-                self.index()
+                if self.peek().type == TT_LSBRACKET and self.peek_next_token(TT_RSBRACKET) is not None and self.peek_next_token(TT_RSBRACKET).type not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]:
+                    if not self.consume([TT_IDTFR]):return
+                    self.index()
+                elif self.peek().type != TT_LSBRACKET:
+                    if not self.consume([TT_IDTFR]):return
+                    self.index()
+                else:
+                    self.math_operation()
             elif self.current_token.type in [TT_IDTFR, TT_LEN, TT_LOAD] and self.peek() is not None and self.peek().type == TT_LPAREN:
                 if self.peek_next_token(TT_RPAREN) is not None and self.peek_next_token(TT_RPAREN).type not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]:
                     self.func_call()
@@ -468,6 +474,9 @@ class SyntaxAnalyzer:
                 if not self.consume([TT_LPAREN]):return
                 self.math_operation()
                 if not self.consume([TT_RPAREN]):return
+                if self.current_token.type in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]: 
+                    self.mos()
+                    self.math_tail()
             else:
                 self.value()
         else:
@@ -721,7 +730,7 @@ class SyntaxAnalyzer:
             elif self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT] and self.peek() is not None and self.peek().type not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_AND, TT_ORO, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL]:
                 if not self.consume([TT_PINT_LIT, TT_FLEET_LIT]):return
                 if not self.consume([TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_AND, TT_ORO, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL]):return
-            elif self.current_token.type == TT_IDTFR and self.peek() is not None and self.peek().type in [TT_LSBRACKET, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_AND, TT_ORO]:
+            elif self.current_token.type == TT_IDTFR and self.peek() is not None and self.peek().type in [TT_LSBRACKET] and self.peek_next_token(TT_RSBRACKET) is not None and self.peek_next_token(TT_RSBRACKET).type not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]:
                 if not self.consume([TT_IDTFR]):return
                 self.index()
             elif self.current_token.type == TT_PINT_LIT and self.peek() is not None and self.peek().type in [TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL, TT_RPAREN, TT_AND, TT_ORO]:
