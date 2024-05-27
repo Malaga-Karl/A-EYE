@@ -1,2 +1,1 @@
-Discount NOT Applied!
-The Final Total is: 54.0
+Collatz sequence is 5 16 8.0 4.0 2.0 1

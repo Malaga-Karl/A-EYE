@@ -179,19 +179,19 @@ def process_print_statements(line, types_dict):
 
 def extract_var_types(line, types_dict):
     data_type = None
-    if 'pint ' in line:
+    if 'pint ' in line[0:6]:
         data_type = 'int'
         line = line.replace('pint ', '')
-    elif 'fleet ' in line:
+    elif 'fleet ' in line[0:6]:
         data_type = 'float'
         line = line.replace('fleet ', '')
-    elif 'doffy ' in line:
+    elif 'doffy ' in line[0:6]:
         data_type = 'str'
         line = line.replace('doffy ', '')
-    elif 'bull ' in line:
+    elif 'bull ' in line[0:6]:
         data_type = 'bool'
         line = line.replace('bull ', '')
-
+      
     if data_type:
         variables = [var.split('=')[0].strip() for var in line.split(',')]
         for var in variables:
@@ -260,6 +260,13 @@ def generate(code):
             if activeBrackets == 0 and '(' in line:
                 words = line.split()
                 words[0] = 'def'
+                line_index = 0
+                while line_index < len(words):
+                    if words[line_index] == 'pint':
+                        types_dict[words[line_index + 1]] = 'int'
+                    elif words[line_index] == 'fleet':
+                        types_dict[words[line_index + 1]] = 'float'
+                    line_index+=1
                 line = ' '.join(words)            
             line = extract_var_types(line, types_dict)
         
@@ -359,6 +366,11 @@ def generate(code):
                 # Handle the special case for "\n"
                 if arg == '"\\n"':
                     return 'print("\\n", end="")'
+                elif arg in list(types_dict.keys()):
+                    if types_dict[arg] == 'int':
+                        return f'print(int({arg}), end="")'
+                    elif types_dict[arg] == 'float':
+                        return f'print(' + '\"{:.4f}\".format(' + f'{arg}), end="")'
                 elif '"' not in arg and operations:
                     if operations == ["//"]:
                          return f'print({arg}, end="")'
@@ -461,6 +473,7 @@ def generate(code):
         
         if activeBrackets == 0 and line != "":
             global_vars.append(line)
+        print(types_dict)
             
     pyfile.write("\nif __name__ == '__main__':\n    main()")
     pyfile.close()
