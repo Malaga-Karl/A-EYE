@@ -724,9 +724,9 @@ class SyntaxAnalyzer:
     # 83 {IDENTIFIER, “len”, “load”}
     def expression(self):
         if self.current_token.type in [TT_IDTFR, TT_PINT_LIT, TT_FLEET_LIT, TT_DOFFY_LIT, TT_REAL, TT_USOPP, TT_NAY, TT_LPAREN, TT_LEN, TT_LOAD, TT_LSBRACKET]: 
-            if self.current_token.type == TT_IDTFR and self.peek() is not None and self.peek().type not in [TT_LSBRACKET, TT_LPAREN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_AND, TT_ORO, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL]:
+            if self.current_token.type == TT_IDTFR and self.peek() is not None and self.peek().type not in [TT_LSBRACKET, TT_LPAREN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV]:
                 if not self.consume([TT_IDTFR]):return
-                if not self.consume([TT_LSBRACKET, TT_LPAREN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_AND, TT_ORO, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL]):return
+                # if not self.consume([TT_LSBRACKET, TT_LPAREN, TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_AND, TT_ORO, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL]):return
             elif self.current_token.type in [TT_PINT_LIT, TT_FLEET_LIT] and self.peek() is not None and self.peek().type not in [TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_AND, TT_ORO, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL]:
                 if not self.consume([TT_PINT_LIT, TT_FLEET_LIT]):return
                 if not self.consume([TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_EXPONENT, TT_FDIV, TT_AND, TT_ORO, TT_LTHAN, TT_GTHAN, TT_LEQUAL, TT_GEQUAL, TT_EQUAL, TT_NOTEQUAL]):return
