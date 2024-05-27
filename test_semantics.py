@@ -11,6 +11,7 @@ class SemanticAnalyzer:
         self.function_signatures = {}
         self.inLocal = False
         self.inConLoops = False
+        self.inConNum = 0
 
     def analyze(self, tokens):
         tokens = self.filter_tokens(tokens)
@@ -75,10 +76,15 @@ class SemanticAnalyzer:
 
         for symbol_dict in self.symbol_table:
             if self.inConLoops:
-                keys_to_remove = [
-                    key for key, value in symbol_dict.items() 
-                    if value.get('inConLoops', False)
-                ]
+                if self.inConNum == 1:
+                    keys_to_remove = [
+                        key for key, value in symbol_dict.items() 
+                        if value.get('inConLoops', False)
+                    ]
+                else:
+                    keys_to_remove = [
+                        
+                    ]
             else:
                 keys_to_remove = [
                     key for key, value in symbol_dict.items() 
@@ -88,8 +94,10 @@ class SemanticAnalyzer:
             for key in keys_to_remove:
                 del symbol_dict[key]
 
-        self.inConLoops = False
-
+        if self.inConLoops:
+            self.inConNum -= 1
+            if self.inConNum == 0:
+                self.inConLoops = False
         if TT_ALT in [token.type for token in line_tokens] or TT_ALTHEO in [token.type for token in line_tokens] or TT_THEO in [token.type for token in line_tokens]:
             self.errors.append(f"Improper Statement Placement: ALT or ALTHEO statements should be in a new line after the closing bracket. (line {line_number})")
 
@@ -154,9 +162,9 @@ class SemanticAnalyzer:
 
     def handle_fire_statement(self, line_tokens, line_number):
         expression_tokens = line_tokens[1:-1]
-        if len(expression_tokens) == 1 and expression_tokens[0].type == TT_IDTFR:
-            if not self.is_variable_declared(expression_tokens[0].value):
-                self.errors.append(f"Undeclared Variable Error: Variable '{expression_tokens[0].value}' is not declared. (line {line_number})")
+        if len(expression_tokens) == 3 and expression_tokens[1].type == TT_IDTFR:
+            if not self.is_variable_declared(expression_tokens[1].value):
+                self.errors.append(f"Undeclared Variable Error: Variable '{expression_tokens[1].value}' is not declared. (line {line_number})")
         elif len(expression_tokens) == 5 and (expression_tokens[1].type in [TT_DOFFY, TT_DOFFY_LIT] and expression_tokens[3].type in [TT_PINT, TT_PINT_LIT] and expression_tokens[2].type == TT_MUL):
             print("possible")
         else:
@@ -537,6 +545,7 @@ class SemanticAnalyzer:
     def handle_four_loop(self, line_tokens, line_number):
         self.inLocal = True
         self.inConLoops = True
+        self.inConNum += 1
 
         loop_var = line_tokens[3].value
         start_expr_tokens = []
@@ -604,6 +613,7 @@ class SemanticAnalyzer:
     def handle_whale_loop(self, line_tokens, line_number):
         self.inLocal = True
         self.inConLoops = True
+        self.inConNum += 1
 
         condition_tokens = line_tokens[2:-2]
         isBull = self.contains_comparator(condition_tokens)
@@ -613,6 +623,7 @@ class SemanticAnalyzer:
     def handle_theo_conditional(self, line_tokens, line_number):
         self.inLocal = True
         self.inConLoops = True
+        self.inConNum += 1
 
         condition_tokens = line_tokens[2:-2]
         isBull = self.contains_comparator(condition_tokens)
@@ -622,6 +633,7 @@ class SemanticAnalyzer:
     def handle_altheo_conditional(self, line_tokens, line_number):
         self.inLocal = True
         self.inConLoops = True
+        self.inConNum += 1
 
         condition_tokens = line_tokens[2:-2]
         isBull = self.contains_comparator(condition_tokens)
@@ -631,12 +643,14 @@ class SemanticAnalyzer:
     def handle_alt_conditional(self, line_tokens, line_number):
         self.inLocal = True
         self.inConLoops = True
+        self.inConNum += 1
 
         pass  
 
     def handle_helm_switch(self, line_tokens, line_number):
         self.inLocal = True
         self.inConLoops = True
+        self.inConNum += 1
 
         expression_tokens = line_tokens[2:-2]
         expression_type = self.evaluate_expression_type(expression_tokens)
@@ -699,7 +713,6 @@ class SemanticAnalyzer:
                     right_tokens.append(token)
                 left_type = evaluate(left_tokens)
                 right_type = evaluate(right_tokens)
-                print(right_type)
                 if left_type == right_type:
                     return left_type
                 elif left_type in self.compatible_types and right_type in self.compatible_types[left_type]:
