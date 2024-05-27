@@ -644,10 +644,10 @@ class SemanticAnalyzer:
             self.errors.append(f"Type Error: HELM expression must be of type {TT_PINT}, {TT_DOFFY}, {TT_FLEET}, {TT_BULL}. (line {line_number})")
     
     compatible_types = {
-        TT_PINT: [TT_PINT_LIT],
-        TT_DOFFY: [TT_DOFFY_LIT],
-        TT_FLEET: [TT_FLEET_LIT],
-        TT_BULL: [TT_REAL, TT_USOPP],
+        TT_PINT: [TT_PINT_LIT, TT_PINT],
+        TT_DOFFY: [TT_DOFFY_LIT, TT_DOFFY],
+        TT_FLEET: [TT_FLEET_LIT, TT_PINT_LIT, TT_PINT, TT_FLEET],
+        TT_BULL: [TT_REAL, TT_USOPP, TT_BULL],
     }
     
     def evaluate_expression_type(self, expression_tokens):
@@ -699,6 +699,7 @@ class SemanticAnalyzer:
                     right_tokens.append(token)
                 left_type = evaluate(left_tokens)
                 right_type = evaluate(right_tokens)
+                print(right_type)
                 if left_type == right_type:
                     return left_type
                 elif left_type in self.compatible_types and right_type in self.compatible_types[left_type]:
