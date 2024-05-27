@@ -72,6 +72,15 @@ def preprocess_identifiers(code, keywords):
 
     return ''.join(new_segments)
 
+def extract_operations(expression):
+    # Define the regular expression pattern to match operators
+    pattern = r'//|[-+*/]'
+    
+    # Find all matches of the pattern in the expression
+    operators = re.findall(pattern, expression)
+    
+    return operators
+
 def replace_code(line, replacements, types_dict):
     # Split the line by keeping the delimiters (string quotes)
     segments = re.split(r'(\".*?\")', line)
@@ -298,23 +307,32 @@ def generate(code):
             isParam = False
             isArray = False
             isInQuote = False
-            for letter in line:
+            new_line = ""
+            i = 0
+
+            while i < len(line):
+                letter = line[i]
+                
                 if letter == '[':
                     isArray = True
-                if letter == ']':
+                elif letter == ']':
                     isArray = False
-                if letter == '(':
+                elif letter == '(':
                     isParam = True
-                if letter == ')':
+                elif letter == ')':
                     isParam = False
-                if letter == '"' and not isInQuote:
+                elif letter == '"' and not isInQuote:
                     isInQuote = True
                 elif letter == '"' and isInQuote:
                     isInQuote = False
-                if letter == ',' and not isParam and not isArray and not isInQuote:
-                    line = line.replace(letter, "; ", 1)
-            line = line
-            print("comma detected + ", line)
+
+                if letter == ',' and not (isParam or isArray or isInQuote):
+                    new_line += "; "
+                else:
+                    new_line += letter
+
+                i += 1
+            line=new_line
 
         if 'fire' in line:
             # Define a regex pattern to match fire function calls with arguments
@@ -337,12 +355,15 @@ def generate(code):
                     return match.group(0)  # No match found, return original string
                 
                 arg = line[arg_start:arg_end].strip()
-                
+                operations = extract_operations(arg)
                 # Handle the special case for "\n"
                 if arg == '"\\n"':
                     return 'print("\\n", end="")'
-                elif '/' in arg and '"' not in arg:
-                    return f'print(' + '\"{:.4f}\".format(' + f'{arg}, end=""))'
+                elif '"' not in arg and operations:
+                    if operations == ["//"]:
+                         return f'print({arg}, end="")'
+                    elif '/' in arg:
+                        return f'print(' + '\"{:.4f}\".format(' + f'{arg}), end="")'
                 else:
                     return f'print({arg}, end="")'
             

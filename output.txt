@@ -1,1 +1,2 @@
-enter a number less than or equal to 100
+Discount NOT Applied!
+The Final Total is: 54.0
